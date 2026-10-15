@@ -577,6 +577,15 @@
     });
   }
 
+  /* ---------------- 移动端导航 ---------------- */
+  function initBurger() {
+    const burger = $("#navBurger");
+    const links = $("#navLinks");
+    if (!burger || !links) return;
+    burger.addEventListener("click", () => links.classList.toggle("show"));
+    links.addEventListener("click", e => { if (e.target.tagName === "A") links.classList.remove("show"); });
+  }
+
   /* ---------------- 分发 ---------------- */
   const RENDER = {
     start: renderStart,
@@ -595,6 +604,7 @@
   }
   document.addEventListener("DOMContentLoaded", () => {
     initTheme();
+    initBurger();
     const app = $("#app");
     if (app) render(app);
   });

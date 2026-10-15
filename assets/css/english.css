@@ -643,6 +643,15 @@ body::before {
   .nav-links.show { display: flex; }
   .nav-links a { padding: 12px 14px; font-size: 15px; }
   .nav-tools .nav-burger { display: inline-flex; }
+  /* 小屏导航修复（与德语站同步）：品牌区可压缩 + 隐藏长副标题 + 工具区固定右侧，
+     确保 ☰ 汉堡按钮不被挤出视口 */
+  .nav-inner { padding: 0 12px; gap: 10px; }
+  .nav-brand { flex-shrink: 1; min-width: 0; }
+  .nav-brand-text { min-width: 0; }
+  .nav-brand-sub { display: none; }
+  .nav-brand-title { font-size: 15px; white-space: nowrap; }
+  .nav-tools { flex-shrink: 0; margin-left: auto; }
+  .nav-tools button { width: 34px; height: 34px; }
   .page-wrap { padding: 88px 28px 48px; }
   .page-title { font-size: 32px; }
   .hero { padding: 40px 28px 36px; }
