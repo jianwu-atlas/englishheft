@@ -81,7 +81,7 @@
 
 ## 更新记录
 
-- 2026-10-15（**场景句德文对照 + 逐词 IPA + de-DE 朗读（试点 Section 1）**，commit 待回填）：
+- 2026-10-15（**场景句德文对照 + 逐词 IPA + de-DE 朗读（试点 Section 1）**，commit `68cbe6b`）：
   - **方案（Jian 拍板）**：翻译范围 = **先试点 1 个大类**（Section 1「基本常识」5 Part / 18 场景 / **179 句**）；德语音标 = **逐词 IPA**（复用德语站词级 IPA，句内拼合，**仅示意**，未映射词留空）。
   - **数据管线**：`data/de_translations.json`（179 句英→德，LLM 生成，key=`场景号:句idx`，已校验与 179 句一一对齐、无缺无多）+ `data/de_ipa_dict.json`（1249 词→IPA，快照自德语站 `pron.js`+`wortliste.js`，剔除 word==ipa 回退项）→ **`scripts/build_en_de.py`**（分词：去首尾标点/小写/ß→ss，逐词查 IPA）→ **`assets/js/data/en-de.js`**（`const EN_DE={"1.1.1:0":{de, ipa:[…]}}`，`ipa[]` 与 `de.split(/\s+/)` 逐词对齐）。当前 IPA 词覆盖 **55%**（高频实词/功能词多在，缺失多为例形变位 + 专名 + 少量高频功能词如 das/an/am）。
   - **前端**：`site.js` 加 `gerHtml()`（逐词 + 逐词 IPA + de-DE 🔊 按钮）、`speakDe()`/`deVoice`（`lang="de-DE"`，语速三档与英语共用）；`renderSentences` 取**原始句 idx**（非「只看解析」过滤后）组 key 注入德文行（英文 → 🇩🇪德文 → 中文 → 解析）。**复用既有「🇩🇪 德语对照」开关**（`#app.show-de`，同时控制词级 `w.de` 与句级德文行）。`en-de.js` 仅在 `sentences.html` 加载（`gen_pages.py` 加 `{extra_scripts}` 钩子）。无数据 Part 优雅降级（不渲染德文行、英文照常）。
