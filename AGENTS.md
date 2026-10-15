@@ -17,8 +17,8 @@
 | `sentences.html` | **场景句**：4941 句（英文/中文）+ **1272 条句子解析**（● 短语用法 / ★ 单词说明 / ■ 句型搭配）；可「只看有解析」；**单词联动**（`?w=词` 横幅 + 青绿高亮）、**场景互跳**、**进度打勾**、**🇩🇪 德文对照**（逐词 IPA + de-DE 朗读，试点 Section 1） |
 | `phonetics.html` | **语音·音标**：**51 个音素**（25 元音 + 26 辅音）表，每音素配**书中例词** + 出现次数；**点行音素反查**（→`vocab.html?ph=…`） |
 | `sections.html` | **大类导览**：17 个 Section 的构成（Part / 场景清单）与学习建议；**学习进度**（总进度条 + 大类徽章 + 场景 chip ✓） |
-| `pdf.html` | **原文 PDF**：在线翻阅《15000英语单词口袋书》原版（`<iframe>` 阅读器，镜像德语站 `lbk-viewer`）+ 下载按钮。**独立壳手工维护**（无 `#app`，仅载 site.js 走 initTheme + 内联 toggle）；`assets/15000-en-words.pdf`（6.5 MB / 1370 页） |
-| `assets/js/site.js` | 交互核心：页面分发、**en-US + de-DE 朗读**（语速三档共用）、隐藏中文自测、复制纯英文、**词汇↔场景句联动（hash `#sc-x-y-z` + `?w=` + `?ph=`）**、搜索 / 进度 / Anki 导出、**🇩🇪 德文对照渲染**（`gerHtml` 逐词 IPA + `speakDe`） |
+| `pdf.html` | **原文 PDF**：在线翻阅《15000英语单词口袋书》原版（`<iframe>` 阅读器，镜像德语站 `lbk-viewer`）+ 下载按钮。**独立壳手工维护**（无 `#app`，仅载 site.js 走 initTheme + initBurger + 内联 toggle）；`assets/15000-en-words.pdf`（6.5 MB / 1370 页） |
+| `assets/js/site.js` | 交互核心：页面分发、**en-US + de-DE 朗读**（语速三档共用）、隐藏中文自测、复制纯英文、**词汇↔场景句联动（hash `#sc-x-y-z` + `?w=` + `?ph=`）**、搜索 / 进度 / Anki 导出、**🇩🇪 德文对照渲染**（`gerHtml` 逐词 IPA + `speakDe`）、**移动端 ☰ 汉堡导航**（`initBurger`，小屏 6 链接折叠为汉堡下拉） |
 | `assets/js/offline.js` | PWA：注册 SW + 「📥 离线缓存」按钮 + iOS 添加到主屏幕提示 |
 | `sw.js` / `manifest.webmanifest` | Service Worker（缓存优先 + 导航回退）与 PWA 清单 |
 | `assets/css/english.css` | 设计系统（复制自德语站 `deutsch.css`）+ 英语站专属样式 |
@@ -82,6 +82,17 @@
 
 ## 更新记录
 
+- 2026-10-15（**首页卡片内边距加宽**，Jian 5 项改动中的 #2「左边太挤，留点空位置」）：
+  - **根因**：`.card` 基类无 padding，`.en-card`（首页 5 张导航卡）亦无内边距，卡内「词汇 / 493 场景·7052 词条 / 描述」紧贴卡片左边框（Playwright 实测 gapL=1px）。
+  - **修复**（`assets/css/english.css` `.en-card`）：加 `padding:16px 20px`，卡内容统一内缩，与德语站卡片边距惯例一致。桌面/移动均生效。
+  - **版本**：`english.css` v7→**v8**（`gen_pages.py` 模板 bump + 重新生成 5 页 + `pdf.html` 手工同步，共 6 页）。
+  - **部署规则变更（Jian 拍板，长期有效）**：**以后不再部署到 EdgeOne Makers**（`englishheft.edgeone.cool` 国内不可达）。本仓库后续仅 GitHub Pages（push 即发）+ Cloudflare（`englishheft.pages.dev`，wrangler）；EdgeOne 现有站点保留不动、停止更新。
+  - 📌 **连带澄清（Jian 5 项中的 #4「德文对照句在哪」）**：场景句「🇩🇪 德语对照」功能已于 commit `68cbe6b`（19:18）上线，覆盖 Section 1 试点 179 句。Jian 截图（18:35）拍于上线之前，故看不到；**现线上已正常**（Playwright 实测 github.io 线上：开启开关后 49/49 德文行渲染，含「I'll be there in just a minute.」→「Ich bin gleich in einer Minute da.」）。用户浏览器刷新即可见，无需改代码。
+- 2026-10-15（**移动端导航修复**：手机端 6 个导航链接彻底消失、无汉堡入口，commit `328c278`）：
+  - **根因**：英语站导航 CSS 从德语站拷来、假设有 ☰ 汉堡（小屏 `.nav-links{display:none}` + `.nav-burger{display:inline-flex}`），但 **HTML 的 `nav-tools` 里从没加过汉堡按钮**（只有主题按钮 `◐`）→ 手机端 6 链接被隐藏且无入口唤出（Playwright 390px 实测 0/6 可见）。
+  - **修复（与德语站同步）**：① `gen_pages.py` 模板 + `pdf.html` 的 `nav-tools` 加 `<button class="nav-burger" id="navBurger">☰</button>`；② `site.js` 加 `initBurger()`（汉堡 toggle `#navLinks .show`、点链接关闭）并接入 `DOMContentLoaded`；③ `english.css` `@media ≤900px` 同步德语站压缩（品牌区 `flex-shrink:1;min-width:0` + 隐 `.nav-brand-sub` + `.nav-tools{flex-shrink:0;margin-left:auto}`）防汉堡被挤出视口。
+  - **版本**：`english.css v6→v7`、`site.js v5→v6`（6 页：5 生成 + `pdf.html` 手工）。
+  - **验证**（Playwright）：390px 汉堡 `right=378` 入视口、点击展开 6 链接（index 与 pdf.html 均生效）；1500px 桌面 6 链接 + 副标题正常、无汉堡；**0 JS 错误**。三线部署 + curl 验证（Cloudflare/GitHub 出 v7 + navBurger；EdgeOne deploy 成功）。
 - 2026-10-15（**场景句德文对照 + 逐词 IPA + de-DE 朗读（试点 Section 1）**，commit `68cbe6b`）：
   - **方案（Jian 拍板）**：翻译范围 = **先试点 1 个大类**（Section 1「基本常识」5 Part / 18 场景 / **179 句**）；德语音标 = **逐词 IPA**（复用德语站词级 IPA，句内拼合，**仅示意**，未映射词留空）。
   - **数据管线**：`data/de_translations.json`（179 句英→德，LLM 生成，key=`场景号:句idx`，已校验与 179 句一一对齐、无缺无多）+ `data/de_ipa_dict.json`（1249 词→IPA，快照自德语站 `pron.js`+`wortliste.js`，剔除 word==ipa 回退项）→ **`scripts/build_en_de.py`**（分词：去首尾标点/小写/ß→ss，逐词查 IPA）→ **`assets/js/data/en-de.js`**（`const EN_DE={"1.1.1:0":{de, ipa:[…]}}`，`ipa[]` 与 `de.split(/\s+/)` 逐词对齐）。当前 IPA 词覆盖 **72%**（Jian 拍板「补高频词」后新增 `data/de_ipa_supplement.json`：50 条高频功能词/变位，base 优先合并，键归一化小写/ß→ss 修掉 ß 匹配坑）。

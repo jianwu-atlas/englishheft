@@ -1321,7 +1321,7 @@ ruby.dh-ipa:hover rt { color: var(--gold); }
 .en-hero-num { font-family: var(--font-display, Georgia, serif); font-size: 52px; font-weight: 600; color: var(--accent); line-height: 1; }
 .en-hero-label { margin-top: 8px; font-size: 13px; color: var(--ink-3); }
 .en-cards { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 14px; margin: 8px 0 20px; }
-.en-card { display: block; text-decoration: none; color: inherit; transition: transform .16s, box-shadow .16s; }
+.en-card { display: block; text-decoration: none; color: inherit; padding: 16px 20px; transition: transform .16s, box-shadow .16s; }
 .en-card:hover { transform: translateY(-3px); }
 .en-card-head { display: flex; align-items: baseline; gap: 8px; }
 .en-card-zh { font-size: 15px; font-weight: 600; color: var(--ink); }
