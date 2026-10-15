@@ -82,6 +82,13 @@
 
 ## 更新记录
 
+- 2026-10-15（**vocab 场景卡左边距修复**，Jian 反馈「还是老问题，左边太靠边界」@vocab.html）：
+  - **根因**：与德语站 #90 同根——`.card` 基类无 padding，vocab/sentences 页的场景卡 `.sc-scene` 亦无内边距，卡内 `.en-words` 网格与德文对照行 `.en-de` 紧贴卡片左缘（Playwright 实测内容 gapL≈1px）。
+  - **修复**（`assets/css/english.css` `.sc-scene`）：加 `padding: 18px 22px`，**与德语站 `.sc-scene` 逐字一致**（设计系统同步）。vocab 与 sentences 两张 `.sc-scene` 卡同时生效。
+  - **版本**：`english.css` v8→**v9**（`gen_pages.py` 模板 bump + 重新生成 5 页 + `pdf.html` 手工同步，共 6 页）。
+  - **验证**：Playwright 1400px，vocab 卡内容左边距 ~1px→**23px**、`padding-left=22px`，`.en-de` 存在，0 JS 报错。
+  - **部署**：GitHub Pages（push 即发）+ Cloudflare `englishheft.pages.dev`（wrangler）。
+
 - 2026-10-15（**首页卡片内边距加宽**，Jian 5 项改动中的 #2「左边太挤，留点空位置」）：
   - **根因**：`.card` 基类无 padding，`.en-card`（首页 5 张导航卡）亦无内边距，卡内「词汇 / 493 场景·7052 词条 / 描述」紧贴卡片左边框（Playwright 实测 gapL=1px）。
   - **修复**（`assets/css/english.css` `.en-card`）：加 `padding:16px 20px`，卡内容统一内缩，与德语站卡片边距惯例一致。桌面/移动均生效。
