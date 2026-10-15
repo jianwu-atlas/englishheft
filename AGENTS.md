@@ -36,8 +36,9 @@
 | `assets/js/data/english.js` | 脚本生成，**勿手改**（1059 KB） |
 | `assets/js/data/en-de.js` | **德文对照数据**，由 `build_en_de.py` 生成，**勿手改**。`const EN_DE = { "场景号:句idx": {de, ipa:[…]} }`；`ipa[]` 与 `de.split(/\s+/)` 逐词对齐，空串=未映射 IPA。当前**试点 Section 1（179 句）** |
 | `data/de_translations.json` | **英→德翻译**（179 句，LLM 生成），key=`场景号:句idx`；`build_en_de.py` 输入源之一 |
-| `data/de_ipa_dict.json` | **德语词→IPA 字典**（1249 词，快照自德语站 `pron.js`+`wortliste.js`，已剔除 word==ipa 回退项）；`build_en_de.py` 输入源之一 |
-| `scripts/build_en_de.py` | 读 `data/` 两 json → 分词 + 逐词查 IPA（去标点/小写/ß→ss）→ 生成 `en-de.js`。铺开其它 Section 时先补 `de_translations.json` 再重跑 |
+| `data/de_ipa_dict.json` | **德语词→IPA 字典**（1249 词，快照自德语站 `pron.js`+`wortliste.js`，已剔除 word==ipa 回退项）；`build_en_de.py` 权威输入源 |
+| `data/de_ipa_supplement.json` | **高频功能词/变位 IPA 补全**（50 词：das/an/am/so/als/da/mal/diese + 常见变位 hast/wird/wurde/kannst 等）；填补快照缺口，**base 优先**（冲突保留快照值）；`build_en_de.py` 可选输入源 |
+| `scripts/build_en_de.py` | 读 `data/`（translations + ipa_dict + ipa_supplement）→ 键归一化（小写/ß→ss，base 优先合并）→ 分词逐词查 IPA → 生成 `en-de.js`。当前 **IPA 词覆盖 72%**。铺开其它 Section 时先补 `de_translations.json` 再重跑 |
 | `scripts/_test_en_de.py` | 德文对照 Playwright 测试（默认隐藏 / 开关显形 / 逐词 IPA / de-DE 朗读函数 / 无数据 Part 优雅降级 / **无 JS 错误**；**需 anaconda 解释器**） |
 
 ## 数据源与蒸馏要点
@@ -83,11 +84,11 @@
 
 - 2026-10-15（**场景句德文对照 + 逐词 IPA + de-DE 朗读（试点 Section 1）**，commit `68cbe6b`）：
   - **方案（Jian 拍板）**：翻译范围 = **先试点 1 个大类**（Section 1「基本常识」5 Part / 18 场景 / **179 句**）；德语音标 = **逐词 IPA**（复用德语站词级 IPA，句内拼合，**仅示意**，未映射词留空）。
-  - **数据管线**：`data/de_translations.json`（179 句英→德，LLM 生成，key=`场景号:句idx`，已校验与 179 句一一对齐、无缺无多）+ `data/de_ipa_dict.json`（1249 词→IPA，快照自德语站 `pron.js`+`wortliste.js`，剔除 word==ipa 回退项）→ **`scripts/build_en_de.py`**（分词：去首尾标点/小写/ß→ss，逐词查 IPA）→ **`assets/js/data/en-de.js`**（`const EN_DE={"1.1.1:0":{de, ipa:[…]}}`，`ipa[]` 与 `de.split(/\s+/)` 逐词对齐）。当前 IPA 词覆盖 **55%**（高频实词/功能词多在，缺失多为例形变位 + 专名 + 少量高频功能词如 das/an/am）。
+  - **数据管线**：`data/de_translations.json`（179 句英→德，LLM 生成，key=`场景号:句idx`，已校验与 179 句一一对齐、无缺无多）+ `data/de_ipa_dict.json`（1249 词→IPA，快照自德语站 `pron.js`+`wortliste.js`，剔除 word==ipa 回退项）→ **`scripts/build_en_de.py`**（分词：去首尾标点/小写/ß→ss，逐词查 IPA）→ **`assets/js/data/en-de.js`**（`const EN_DE={"1.1.1:0":{de, ipa:[…]}}`，`ipa[]` 与 `de.split(/\s+/)` 逐词对齐）。当前 IPA 词覆盖 **72%**（Jian 拍板「补高频词」后新增 `data/de_ipa_supplement.json`：50 条高频功能词/变位，base 优先合并，键归一化小写/ß→ss 修掉 ß 匹配坑）。
   - **前端**：`site.js` 加 `gerHtml()`（逐词 + 逐词 IPA + de-DE 🔊 按钮）、`speakDe()`/`deVoice`（`lang="de-DE"`，语速三档与英语共用）；`renderSentences` 取**原始句 idx**（非「只看解析」过滤后）组 key 注入德文行（英文 → 🇩🇪德文 → 中文 → 解析）。**复用既有「🇩🇪 德语对照」开关**（`#app.show-de`，同时控制词级 `w.de` 与句级德文行）。`en-de.js` 仅在 `sentences.html` 加载（`gen_pages.py` 加 `{extra_scripts}` 钩子）。无数据 Part 优雅降级（不渲染德文行、英文照常）。
   - **版本**：`english.css v5→v6`、`site.js v4→v5`、新增 `en-de.js?v=1`（6 页导航/页脚不变）。
   - **验证**：`scripts/_test_en_de.py` 全过（默认 `display:none` / 开关后 `flex` / 逐词 IPA / de-DE 函数 / Section 2 无数据不崩 / **0 JS 错误**）；截图确认逐词 IPA 排版。
-  - ⏳ **待 Jian 复核试点后**：① 是否补高频功能词 IPA（如 das/an/am/so/als/da/mal + 例形变位）；② 是否铺开其余 16 个 Section（4762 句，需逐批 LLM 翻译）。
+  - ✅ **① 已补高频功能词 IPA**（Jian 拍板「补高频词」）：`data/de_ipa_supplement.json` 50 条 → 覆盖 55%→**72%**。⏳ **② 铺开其余 16 个 Section**（4762 句，需逐批 LLM 翻译）——**Jian 拍板「先只留 Section 1」**，待复核试点后再定。
 - 2026-10-15（**首页 logo 放大 + 内容左边距加宽 + 原文 PDF 在线阅读**，commit `663a591`）：
   - **① logo 放大**：`.brand-mark` 34px→**44px**（border-radius 9px→11px）。双色块 logo 为填充色块（非细线稿），放大无小尺寸稀释问题；德语站金印 logo 仍 34px（两站独立，互不影响）。
   - **② 内容左边距加宽**：`.page-wrap` 水平 padding 桌面 **24px→44px**（两处重复定义同改）/ 小屏 **18px→28px** / print 保持 0——与德语站对齐（Jian「左边太挤，留点空间」）。

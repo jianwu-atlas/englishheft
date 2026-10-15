@@ -4,8 +4,9 @@
 build_en_de.py — 生成英语站场景句「德文对照 + 逐词 IPA」数据文件。
 
 输入（均在 data/ 目录，手维护 / 已校验）：
-  data/de_translations.json  { "<场景号:idx>": "<德文句子>", ... }   （英→德 LLM 翻译）
-  data/de_ipa_dict.json      { "<德文词>": "<IPA>", ... }            （德语站词级 IPA 快照）
+  data/de_translations.json     { "<场景号:idx>": "<德文句子>", ... }   （英→德 LLM 翻译）
+  data/de_ipa_dict.json         { "<德文词>": "<IPA>", ... }            （德语站词级 IPA 快照，权威源）
+  data/de_ipa_supplement.json   { "<德文词>": "<IPA>", ... }            （可选：高频功能词/变位补全，填充快照缺口）
 
 输出：
   assets/js/data/en-de.js    const EN_DE = { "<key>": {de, ipa:[...]}, ... }
@@ -13,6 +14,8 @@ build_en_de.py — 生成英语站场景句「德文对照 + 逐词 IPA」数据
 逐词 IPA 规则：
   - 德文句子按空白分词（与前端 de.split(/\\s+/) 完全一致，保证对齐）。
   - 每词取「词干」用于查 IPA：去首尾标点 → 小写 → ß→ss。
+  - 词典合并：base 与 supplement 的键都按同一规则（小写 + ß→ss）归一化，
+    **base 优先**（冲突时保留快照值），supplement 只填补 base 没有的词。
   - 命中词典 → 该词 IPA；未命中 → 空串 ""（Jian 拍板「仅示意」，空缺可接受）。
 
 仅试点 Section 1（179 句）。铺开到其它 Section 时，先补 de_translations.json，再重跑本脚本。
@@ -25,7 +28,13 @@ ROOT = os.path.dirname(HERE)
 
 TR_PATH = os.path.join(ROOT, "data", "de_translations.json")
 IPA_PATH = os.path.join(ROOT, "data", "de_ipa_dict.json")
+SUPP_PATH = os.path.join(ROOT, "data", "de_ipa_supplement.json")
 OUT_PATH = os.path.join(ROOT, "assets", "js", "data", "en-de.js")
+
+
+def norm_key(k: str) -> str:
+    """词典键归一化（与词干查找口径一致）：去首尾空白 → 小写 → ß→ss。"""
+    return k.strip().lower().replace("ß", "ss")
 
 
 def stem(token: str) -> str:
@@ -43,13 +52,21 @@ def stem(token: str) -> str:
 def main():
     tr = json.load(open(TR_PATH, encoding="utf-8"))
     ipa_raw = json.load(open(IPA_PATH, encoding="utf-8"))
-    # 统一小写键（本词典已无大小写冲突，见校验）
-    ipa = {k.lower(): v for k, v in ipa_raw.items()}
+    supp_raw = {}
+    if os.path.exists(SUPP_PATH):
+        supp_raw = json.load(open(SUPP_PATH, encoding="utf-8"))
+
+    base = {norm_key(k): v for k, v in ipa_raw.items()}
+    supp = {norm_key(k): v for k, v in supp_raw.items()}
+    conflicts = sorted(k for k in supp if k in base and base[k] != supp[k])
+    # base 优先（冲突保留快照值），supplement 只填补缺口
+    ipa = {**supp, **base}
 
     result = {}
     total_tokens = 0
     covered = 0
     missing = set()
+    used_supp = set()
 
     for key, de in tr.items():
         tokens = de.split()
@@ -59,6 +76,8 @@ def main():
             hit = ipa.get(s, "") if s else ""
             if hit:
                 covered += 1
+                if s in supp and s not in base:
+                    used_supp.add(s)
             else:
                 if s:
                     missing.add(s)
@@ -84,6 +103,10 @@ def main():
 
     print(f"wrote {os.path.relpath(OUT_PATH, ROOT)}")
     print(f"sents={len(ordered)}  tokens={total_tokens}  ipa_covered={covered} ({100*covered//max(total_tokens,1)}%)")
+    print(f"dict: base={len(base)}  supplement={len(supp)}  merged={len(ipa)}  conflicts(base-wins)={len(conflicts)}")
+    if conflicts:
+        print("  conflicts:", ", ".join(conflicts))
+    print(f"supplement words actually used={len(used_supp)}", sorted(used_supp)[:12])
     print(f"distinct_missing_words={len(missing)}")
     if missing:
         print("missing sample:", ", ".join(sorted(missing)[:40]))
