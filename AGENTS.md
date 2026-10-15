@@ -12,17 +12,18 @@
 
 | 路径 | 用途 |
 |---|---|
-| `index.html` | 首页：总量统计 + 4 张入口卡 + 来源说明 |
+| `index.html` | 首页：总量统计 + **5 张入口卡**（含原文 PDF）+ 来源说明 |
 | `vocab.html` | **词汇**：17 大类 → **Part 二级导航** → 场景，493 场景 / 7052 词条，三行格式 + 逐条 🔊；**全局搜索**（EN/中文/音标）、**单词联动链接**（→场景句）、**Anki 导出**（本 Part）、**进度打勾** |
 | `sentences.html` | **场景句**：4941 句（英文/中文）+ **1272 条句子解析**（● 短语用法 / ★ 单词说明 / ■ 句型搭配）；可「只看有解析」；**单词联动**（`?w=词` 横幅 + 青绿高亮）、**场景互跳**、**进度打勾** |
 | `phonetics.html` | **语音·音标**：**51 个音素**（25 元音 + 26 辅音）表，每音素配**书中例词** + 出现次数；**点行音素反查**（→`vocab.html?ph=…`） |
 | `sections.html` | **大类导览**：17 个 Section 的构成（Part / 场景清单）与学习建议；**学习进度**（总进度条 + 大类徽章 + 场景 chip ✓） |
+| `pdf.html` | **原文 PDF**：在线翻阅《15000英语单词口袋书》原版（`<iframe>` 阅读器，镜像德语站 `lbk-viewer`）+ 下载按钮。**独立壳手工维护**（无 `#app`，仅载 site.js 走 initTheme + 内联 toggle）；`assets/15000-en-words.pdf`（6.5 MB / 1370 页） |
 | `assets/js/site.js` | 交互核心：页面分发、**en-US 朗读**（语速三档）、隐藏中文自测、复制纯英文、**词汇↔场景句联动（hash `#sc-x-y-z` + `?w=` + `?ph=`）**、搜索 / 进度 / Anki 导出 |
 | `assets/js/offline.js` | PWA：注册 SW + 「📥 离线缓存」按钮 + iOS 添加到主屏幕提示 |
 | `sw.js` / `manifest.webmanifest` | Service Worker（缓存优先 + 导航回退）与 PWA 清单 |
 | `assets/css/english.css` | 设计系统（复制自德语站 `deutsch.css`）+ 英语站专属样式 |
 | `scripts/build_en_site.py` | **蒸馏脚本**：PDF 文本层 → `assets/js/data/english.js` |
-| `scripts/gen_pages.py` | 生成 5 个页面（同壳不同内容，改导航/文案改这里） |
+| `scripts/gen_pages.py` | 生成 5 个页面（同壳不同内容，改导航/文案改这里；NAV 含「原文」→ `pdf.html`，该页本身**手工维护**不进生成） |
 | `scripts/pack_en.py` | 打包 `dist/`（并把全量清单注入 `sw.js` / `offline.js`） |
 | `scripts/_test_en_site.py` | Playwright 冒烟测试（21 项断言） |
 | `scripts/extract_blue.py` | 从 PDF 按字符取色抽取**书本蓝色强调**（RGB 0,158,231）→ `en15000-blue.json`（12783 段） |
@@ -74,6 +75,13 @@
 
 ## 更新记录
 
+- 2026-10-15（**首页 logo 放大 + 内容左边距加宽 + 原文 PDF 在线阅读**，commit `<TBD>`）：
+  - **① logo 放大**：`.brand-mark` 34px→**44px**（border-radius 9px→11px）。双色块 logo 为填充色块（非细线稿），放大无小尺寸稀释问题；德语站金印 logo 仍 34px（两站独立，互不影响）。
+  - **② 内容左边距加宽**：`.page-wrap` 水平 padding 桌面 **24px→44px**（两处重复定义同改）/ 小屏 **18px→28px** / print 保持 0——与德语站对齐（Jian「左边太挤，留点空间」）。
+  - **③ 原文 PDF 在线阅读**：新增 **`pdf.html`**（独立壳手工维护：工具条「📖 在线阅读 / ⬇ 下载 PDF」+ `<iframe>` 阅读器，无 `#app`，仅载 site.js 走 initTheme + 内联 toggle；镜像德语站 `lbk-viewer` iframe 方案）。源 PDF 从德语站 `assets/lehrbuch/E1_15000-en-words.pdf`（**同一文件，sha256 一致**）拷入 `assets/15000-en-words.pdf`（6.5 MB / 1370 页，有文本层）。首页 `renderStart` 加第 5 张入口卡「原文 PDF」；`gen_pages.py` NAV 加「原文」→ **6 页导航 + 页脚 chip 均含「原文」**。
+  - **版本**：`english.css v4→v5`、`site.js v3→v4`（favicon 组仍 `v3`）。**SW/打包**：`pack_en.py` 自动含 `pdf.html` + PDF；SW install 仅预缓存 shell，PDF 运行时 / 「📥 离线缓存」时缓存（同德语站 14MB PDF 处理，无配额问题）。
+  - **验证**：Playwright 全 6 页 **0 JS 错误**；首页 logo 44px / 左边距 44px / 5 卡（含原文 PDF）/ 6 项导航；pdf.html 工具条 + iframe `src=assets/15000-en-words.pdf` + 点击展开（headless 下 PDF 不栅格化属正常，真机浏览器正常显示）。
+  - ⏳ **④ 场景句德文对照 + 德文发音 + 音标（4941 句）待 Jian 拍板方案**（英→德翻译生成方式 + 德语 IPA 粒度）。
 - 2026-10-15（**词汇 ↔ 场景句联动 + 4 项新功能**，commit `a3a77dd`）：
   - **P0 修复**：`V_STATE.part` / `S_STATE.part` 恒为 0 且**无 Part UI**——每个大类只能看到第一个 Part 的场景（如 Section 1 共 18 场景只出 5 个）。新增 **Part 二级导航**（`part-tabs`，词汇/场景句两页）。
   - **A 场景级互跳**：两页场景卡互相加「→ N 句 / → N 词」链接；hash `#sc-1-1-1`（点号→连字符）定位 + **flash 金色描边 2.2s**（`_lastFlash` 防重复）。

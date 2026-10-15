@@ -3,6 +3,7 @@
 """gen_pages.py · 生成英语站的 5 个页面（同一壳，不同标题/描述/data-page）
 
 页面：index / vocab / sentences / phonetics / sections
+（pdf.html 为独立页，含工具条 + iframe 阅读器，**手工维护，不由本脚本生成**；NAV 里的「原文」链接指向它）
 运行：python3 scripts/gen_pages.py
 """
 from pathlib import Path
@@ -15,6 +16,7 @@ NAV = [
     ("sentences.html", "场景句", "Sentences"),
     ("phonetics.html", "语音·音标", "Phonetics"),
     ("sections.html", "大类导览", "Sections"),
+    ("pdf.html", "原文", "Original"),
 ]
 
 PAGES = [
@@ -39,7 +41,7 @@ SHELL = """<!DOCTYPE html>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,300..700;1,9..144,300..700&family=IBM+Plex+Sans:wght@400;500;600;700&family=IBM+Plex+Mono:ital,wght@0,400;0,500;1,400&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="assets/css/english.css?v=4">
+<link rel="stylesheet" href="assets/css/english.css?v=5">
 <link rel="icon" type="image/svg+xml" href="assets/img/favicon.svg?v=3">
 <link rel="icon" type="image/png" sizes="32x32" href="assets/img/favicon-32.png?v=3">
 <link rel="icon" type="image/png" sizes="16x16" href="assets/img/favicon-16.png?v=3">
@@ -92,7 +94,7 @@ SHELL = """<!DOCTYPE html>
 </main>
 
 <script src="assets/js/data/english.js?v=1"></script>
-<script src="assets/js/site.js?v=3"></script>
+<script src="assets/js/site.js?v=4"></script>
 <script src="assets/js/annotate-en.js?v=1"></script>
 <script src="assets/js/offline.js?v=1"></script>
 </body>

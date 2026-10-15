@@ -185,6 +185,7 @@
       ["sentences.html", "场景句", "Sentences", `${nS} 句 · ${nN} 条解析`, "Top10 场景句 + 短语用法 / 单词说明 / 句型搭配"],
       ["phonetics.html", "语音·音标", "Phonetics", `${ph.vowels.length} 元音 · ${ph.consonants.length} 辅音`, "从全书音标反推的音素表，每个音素配书中例词"],
       ["sections.html", "大类导览", "Sections", `${secs.length} 个大类 · ${secs.reduce((a, s) => a + s.parts.length, 0)} 个 Part`, "按 Section → Part → 场景逐层展开"],
+      ["pdf.html", "原文 PDF", "Original", "1370 页 · 6.5 MB", "在线翻阅《15000英语单词口袋书》原版，或下载离线阅读"],
     ];
     app.innerHTML = `
       <div class="en-hero">

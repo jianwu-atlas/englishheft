@@ -1,0 +1,90 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>原文 PDF · Original · 15000 英语单词 · Englishheft</title>
+<meta name="description" content="在线翻阅《15000英语单词口袋书》原版 PDF（1370 页），或下载离线阅读。">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,300..700;1,9..144,300..700&family=IBM+Plex+Sans:wght@400;500;600;700&family=IBM+Plex+Mono:ital,wght@0,400;0,500;1,400&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="assets/css/english.css?v=5">
+<link rel="icon" type="image/svg+xml" href="assets/img/favicon.svg?v=3">
+<link rel="icon" type="image/png" sizes="32x32" href="assets/img/favicon-32.png?v=3">
+<link rel="icon" type="image/png" sizes="16x16" href="assets/img/favicon-16.png?v=3">
+<link rel="apple-touch-icon" sizes="180x180" href="assets/img/apple-touch-icon.png?v=3">
+<link rel="manifest" href="manifest.webmanifest?v=3">
+<meta property="og:type" content="website">
+<meta property="og:title" content="原文 PDF · Original · 15000 英语单词 · Englishheft">
+<meta property="og:description" content="在线翻阅《15000英语单词口袋书》原版 PDF（1370 页），或下载离线阅读。">
+<meta property="og:image" content="assets/img/og-image.png">
+</head>
+<body data-page="pdf">
+<nav class="topnav">
+  <div class="nav-inner">
+    <a href="index.html" class="nav-brand">
+      <span class="brand-mark">E</span>
+      <span class="nav-brand-text">
+        <span class="nav-brand-title">ENGLISHHEFT</span>
+        <span class="nav-brand-sub">Jian (Jack) Wu · 15000 英语单词口袋书</span>
+      </span>
+    </a>
+    <div class="nav-links" id="navLinks">
+      <a href="index.html">首页</a>
+      <a href="vocab.html">词汇</a>
+      <a href="sentences.html">场景句</a>
+      <a href="phonetics.html">语音·音标</a>
+      <a href="sections.html">大类导览</a>
+      <a href="pdf.html" class="active">原文</a>
+    </div>
+    <div class="nav-tools">
+      <button class="theme-toggle" id="themeToggle" title="切换深色 / 浅色">◐</button>
+    </div>
+  </div>
+</nav>
+<main class="page-wrap">
+  <div class="page-head">
+    <div class="page-kicker">15000 英语单词口袋书 · 原文</div>
+    <h1 class="page-title">《15000英语单词口袋书》<em>原文</em></h1>
+    <p class="page-desc">在线翻阅原版 PDF（1370 页 · 6.5 MB），或用下方按钮下载离线阅读。本站全部词汇 / 场景句 / 音标均蒸馏自本书。</p>
+  </div>
+  <div class="pdf-toolbar">
+    <button class="btn primary" id="pdfToggle">📖 在线阅读</button>
+    <a class="btn" href="assets/15000-en-words.pdf" download>⬇ 下载 PDF（6.5 MB）</a>
+  </div>
+  <div class="lbk-viewer" id="pdfViewer" hidden>
+    <iframe src="assets/15000-en-words.pdf" title="15000英语单词口袋书（原版 PDF）" loading="lazy"></iframe>
+  </div>
+  <footer class="site-footer">
+  <div class="footer-inner">
+    <div class="footer-row">
+      <a class="footer-chip" href="index.html">首页</a>
+      <a class="footer-chip" href="vocab.html">词汇</a>
+      <a class="footer-chip" href="sentences.html">场景句</a>
+      <a class="footer-chip" href="phonetics.html">语音·音标</a>
+      <a class="footer-chip" href="sections.html">大类导览</a>
+      <a class="footer-chip" href="pdf.html">原文</a>
+      <a class="footer-chip" href="https://deutschheft.pages.dev/" target="_blank" rel="noopener">↗ Mein Deutschheft（德语站）</a>
+    </div>
+    <div class="footer-copyright">© 2026 Jian (Jack) Wu · Englishheft（《15000英语单词口袋书》蒸馏）· Stand 2026-10-15 ·
+      <a href="https://github.com/jianwu-atlas" target="_blank" rel="noopener">GitHub</a>
+    </div>
+  </div>
+</footer>
+</main>
+
+<script src="assets/js/site.js?v=4"></script>
+<script src="assets/js/offline.js?v=1"></script>
+<script>
+  document.addEventListener("DOMContentLoaded", function () {
+    var b = document.getElementById("pdfToggle");
+    var v = document.getElementById("pdfViewer");
+    if (b && v) b.addEventListener("click", function () {
+      v.hidden = !v.hidden;
+      b.textContent = v.hidden ? "📖 在线阅读" : "✕ 收起阅读器";
+      if (!v.hidden) v.scrollIntoView({ block: "start", behavior: "smooth" });
+    });
+  });
+</script>
+</body>
+</html>

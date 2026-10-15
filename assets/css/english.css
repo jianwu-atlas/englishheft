@@ -68,7 +68,7 @@ body::before {
 .nav-inner { max-width: 1280px; margin: 0 auto; height: 100%; display: flex; align-items: center; gap: 20px; padding: 0 24px; }
 .nav-brand { display: flex; align-items: center; gap: 11px; text-decoration: none; color: var(--ink); }
 .brand-mark {
-  width: 34px; height: 34px; border-radius: 9px; flex-shrink: 0;
+  width: 44px; height: 44px; border-radius: 11px; flex-shrink: 0;
   background: url("../img/favicon.svg?v=34") center/100% 100% no-repeat;
   color: transparent; overflow: hidden;
 }
@@ -94,7 +94,7 @@ body::before {
 .nav-tools button:hover { background: var(--paper-3); }
 .nav-tools .nav-burger { display: none; }
 
-.page-wrap { max-width: 1180px; margin: 0 auto; padding: 104px 24px 60px; position: relative; z-index: 1; }
+.page-wrap { max-width: 1180px; margin: 0 auto; padding: 104px 44px 60px; position: relative; z-index: 1; }
 
 .brand { margin-bottom: 34px; }
 .brand-de {
@@ -128,7 +128,7 @@ body::before {
 }
 .nav-item.active .nav-zh { color: rgba(253,250,243,.6); }
 
-.page-wrap { max-width: 1180px; margin: 0 auto; padding: 104px 24px 60px; position: relative; z-index: 1; }
+.page-wrap { max-width: 1180px; margin: 0 auto; padding: 104px 44px 60px; position: relative; z-index: 1; }
 
 /* ---------------- 页脚（参考 jianwu-atlas-private） ---------------- */
 .site-footer {
@@ -497,6 +497,9 @@ body::before {
 .btn:hover { border-color: var(--ink); color: var(--ink); }
 .btn.primary { background: var(--ink); color: var(--paper-2); border-color: var(--ink); }
 
+/* 原文 PDF 页：工具条（在线阅读 / 下载） */
+.pdf-toolbar { display: flex; flex-wrap: wrap; gap: 10px; margin: 0 0 18px; }
+
 .para { margin-bottom: 16px; overflow: hidden; }
 .para-head {
   display: flex; align-items: baseline; gap: 12px;
@@ -640,7 +643,7 @@ body::before {
   .nav-links.show { display: flex; }
   .nav-links a { padding: 12px 14px; font-size: 15px; }
   .nav-tools .nav-burger { display: inline-flex; }
-  .page-wrap { padding: 88px 18px 48px; }
+  .page-wrap { padding: 88px 28px 48px; }
   .page-title { font-size: 32px; }
   .hero { padding: 40px 28px 36px; }
   .para-de, .para-verbs { padding-left: 20px; }
