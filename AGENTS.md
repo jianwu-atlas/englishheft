@@ -14,11 +14,11 @@
 |---|---|
 | `index.html` | 首页：总量统计 + **5 张入口卡**（含原文 PDF）+ 来源说明 |
 | `vocab.html` | **词汇**：17 大类 → **Part 二级导航** → 场景，493 场景 / 7052 词条，三行格式 + 逐条 🔊；**全局搜索**（EN/中文/音标）、**单词联动链接**（→场景句）、**Anki 导出**（本 Part）、**进度打勾** |
-| `sentences.html` | **场景句**：4941 句（英文/中文）+ **1272 条句子解析**（● 短语用法 / ★ 单词说明 / ■ 句型搭配）；可「只看有解析」；**单词联动**（`?w=词` 横幅 + 青绿高亮）、**场景互跳**、**进度打勾** |
+| `sentences.html` | **场景句**：4941 句（英文/中文）+ **1272 条句子解析**（● 短语用法 / ★ 单词说明 / ■ 句型搭配）；可「只看有解析」；**单词联动**（`?w=词` 横幅 + 青绿高亮）、**场景互跳**、**进度打勾**、**🇩🇪 德文对照**（逐词 IPA + de-DE 朗读，试点 Section 1） |
 | `phonetics.html` | **语音·音标**：**51 个音素**（25 元音 + 26 辅音）表，每音素配**书中例词** + 出现次数；**点行音素反查**（→`vocab.html?ph=…`） |
 | `sections.html` | **大类导览**：17 个 Section 的构成（Part / 场景清单）与学习建议；**学习进度**（总进度条 + 大类徽章 + 场景 chip ✓） |
 | `pdf.html` | **原文 PDF**：在线翻阅《15000英语单词口袋书》原版（`<iframe>` 阅读器，镜像德语站 `lbk-viewer`）+ 下载按钮。**独立壳手工维护**（无 `#app`，仅载 site.js 走 initTheme + 内联 toggle）；`assets/15000-en-words.pdf`（6.5 MB / 1370 页） |
-| `assets/js/site.js` | 交互核心：页面分发、**en-US 朗读**（语速三档）、隐藏中文自测、复制纯英文、**词汇↔场景句联动（hash `#sc-x-y-z` + `?w=` + `?ph=`）**、搜索 / 进度 / Anki 导出 |
+| `assets/js/site.js` | 交互核心：页面分发、**en-US + de-DE 朗读**（语速三档共用）、隐藏中文自测、复制纯英文、**词汇↔场景句联动（hash `#sc-x-y-z` + `?w=` + `?ph=`）**、搜索 / 进度 / Anki 导出、**🇩🇪 德文对照渲染**（`gerHtml` 逐词 IPA + `speakDe`） |
 | `assets/js/offline.js` | PWA：注册 SW + 「📥 离线缓存」按钮 + iOS 添加到主屏幕提示 |
 | `sw.js` / `manifest.webmanifest` | Service Worker（缓存优先 + 导航回退）与 PWA 清单 |
 | `assets/css/english.css` | 设计系统（复制自德语站 `deutsch.css`）+ 英语站专属样式 |
@@ -34,6 +34,11 @@
 | `scripts/gen_logos.py` | Logo SVG → PNG 栅格化（Playwright Chromium）：favicon-16/32/48、apple-touch-icon、icon-192/512/512-maskable、logo-mark、og-image |
 | `scripts/_check_logo.py` | Logo 本地验证（7 项断言：SVG 内容 / 引用版本号 / 导航 mark 渲染） |
 | `assets/js/data/english.js` | 脚本生成，**勿手改**（1059 KB） |
+| `assets/js/data/en-de.js` | **德文对照数据**，由 `build_en_de.py` 生成，**勿手改**。`const EN_DE = { "场景号:句idx": {de, ipa:[…]} }`；`ipa[]` 与 `de.split(/\s+/)` 逐词对齐，空串=未映射 IPA。当前**试点 Section 1（179 句）** |
+| `data/de_translations.json` | **英→德翻译**（179 句，LLM 生成），key=`场景号:句idx`；`build_en_de.py` 输入源之一 |
+| `data/de_ipa_dict.json` | **德语词→IPA 字典**（1249 词，快照自德语站 `pron.js`+`wortliste.js`，已剔除 word==ipa 回退项）；`build_en_de.py` 输入源之一 |
+| `scripts/build_en_de.py` | 读 `data/` 两 json → 分词 + 逐词查 IPA（去标点/小写/ß→ss）→ 生成 `en-de.js`。铺开其它 Section 时先补 `de_translations.json` 再重跑 |
+| `scripts/_test_en_de.py` | 德文对照 Playwright 测试（默认隐藏 / 开关显形 / 逐词 IPA / de-DE 朗读函数 / 无数据 Part 优雅降级 / **无 JS 错误**；**需 anaconda 解释器**） |
 
 ## 数据源与蒸馏要点
 
@@ -60,6 +65,7 @@
 - 本地预览：`cd englishheft/dist && python3 -m http.server 8641 --bind 127.0.0.1`
 - 重新蒸馏：`python3 scripts/build_en_site.py`
 - 重新生成页面：`python3 scripts/gen_pages.py`
+- 重生成德文对照：`python3 scripts/build_en_de.py`（读 `data/` → `en-de.js`）
 - 打包：`python3 scripts/pack_en.py`
 - 冒烟测试：先起本地服务，再 `python3 scripts/_test_en_site.py`
 - 校验：`node --check assets/js/site.js`
@@ -75,13 +81,19 @@
 
 ## 更新记录
 
+- 2026-10-15（**场景句德文对照 + 逐词 IPA + de-DE 朗读（试点 Section 1）**，commit 待回填）：
+  - **方案（Jian 拍板）**：翻译范围 = **先试点 1 个大类**（Section 1「基本常识」5 Part / 18 场景 / **179 句**）；德语音标 = **逐词 IPA**（复用德语站词级 IPA，句内拼合，**仅示意**，未映射词留空）。
+  - **数据管线**：`data/de_translations.json`（179 句英→德，LLM 生成，key=`场景号:句idx`，已校验与 179 句一一对齐、无缺无多）+ `data/de_ipa_dict.json`（1249 词→IPA，快照自德语站 `pron.js`+`wortliste.js`，剔除 word==ipa 回退项）→ **`scripts/build_en_de.py`**（分词：去首尾标点/小写/ß→ss，逐词查 IPA）→ **`assets/js/data/en-de.js`**（`const EN_DE={"1.1.1:0":{de, ipa:[…]}}`，`ipa[]` 与 `de.split(/\s+/)` 逐词对齐）。当前 IPA 词覆盖 **55%**（高频实词/功能词多在，缺失多为例形变位 + 专名 + 少量高频功能词如 das/an/am）。
+  - **前端**：`site.js` 加 `gerHtml()`（逐词 + 逐词 IPA + de-DE 🔊 按钮）、`speakDe()`/`deVoice`（`lang="de-DE"`，语速三档与英语共用）；`renderSentences` 取**原始句 idx**（非「只看解析」过滤后）组 key 注入德文行（英文 → 🇩🇪德文 → 中文 → 解析）。**复用既有「🇩🇪 德语对照」开关**（`#app.show-de`，同时控制词级 `w.de` 与句级德文行）。`en-de.js` 仅在 `sentences.html` 加载（`gen_pages.py` 加 `{extra_scripts}` 钩子）。无数据 Part 优雅降级（不渲染德文行、英文照常）。
+  - **版本**：`english.css v5→v6`、`site.js v4→v5`、新增 `en-de.js?v=1`（6 页导航/页脚不变）。
+  - **验证**：`scripts/_test_en_de.py` 全过（默认 `display:none` / 开关后 `flex` / 逐词 IPA / de-DE 函数 / Section 2 无数据不崩 / **0 JS 错误**）；截图确认逐词 IPA 排版。
+  - ⏳ **待 Jian 复核试点后**：① 是否补高频功能词 IPA（如 das/an/am/so/als/da/mal + 例形变位）；② 是否铺开其余 16 个 Section（4762 句，需逐批 LLM 翻译）。
 - 2026-10-15（**首页 logo 放大 + 内容左边距加宽 + 原文 PDF 在线阅读**，commit `663a591`）：
   - **① logo 放大**：`.brand-mark` 34px→**44px**（border-radius 9px→11px）。双色块 logo 为填充色块（非细线稿），放大无小尺寸稀释问题；德语站金印 logo 仍 34px（两站独立，互不影响）。
   - **② 内容左边距加宽**：`.page-wrap` 水平 padding 桌面 **24px→44px**（两处重复定义同改）/ 小屏 **18px→28px** / print 保持 0——与德语站对齐（Jian「左边太挤，留点空间」）。
   - **③ 原文 PDF 在线阅读**：新增 **`pdf.html`**（独立壳手工维护：工具条「📖 在线阅读 / ⬇ 下载 PDF」+ `<iframe>` 阅读器，无 `#app`，仅载 site.js 走 initTheme + 内联 toggle；镜像德语站 `lbk-viewer` iframe 方案）。源 PDF 从德语站 `assets/lehrbuch/E1_15000-en-words.pdf`（**同一文件，sha256 一致**）拷入 `assets/15000-en-words.pdf`（6.5 MB / 1370 页，有文本层）。首页 `renderStart` 加第 5 张入口卡「原文 PDF」；`gen_pages.py` NAV 加「原文」→ **6 页导航 + 页脚 chip 均含「原文」**。
   - **版本**：`english.css v4→v5`、`site.js v3→v4`（favicon 组仍 `v3`）。**SW/打包**：`pack_en.py` 自动含 `pdf.html` + PDF；SW install 仅预缓存 shell，PDF 运行时 / 「📥 离线缓存」时缓存（同德语站 14MB PDF 处理，无配额问题）。
   - **验证**：Playwright 全 6 页 **0 JS 错误**；首页 logo 44px / 左边距 44px / 5 卡（含原文 PDF）/ 6 项导航；pdf.html 工具条 + iframe `src=assets/15000-en-words.pdf` + 点击展开（headless 下 PDF 不栅格化属正常，真机浏览器正常显示）。
-  - ⏳ **④ 场景句德文对照 + 德文发音 + 音标（4941 句）待 Jian 拍板方案**（英→德翻译生成方式 + 德语 IPA 粒度）。
 - 2026-10-15（**词汇 ↔ 场景句联动 + 4 项新功能**，commit `a3a77dd`）：
   - **P0 修复**：`V_STATE.part` / `S_STATE.part` 恒为 0 且**无 Part UI**——每个大类只能看到第一个 Part 的场景（如 Section 1 共 18 场景只出 5 个）。新增 **Part 二级导航**（`part-tabs`，词汇/场景句两页）。
   - **A 场景级互跳**：两页场景卡互相加「→ N 句 / → N 词」链接；hash `#sc-1-1-1`（点号→连字符）定位 + **flash 金色描边 2.2s**（`_lastFlash` 防重复）。

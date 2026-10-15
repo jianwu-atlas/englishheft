@@ -1252,6 +1252,17 @@ ruby.dh-ipa:hover rt { color: var(--gold); }
 .sc-turn-body .s-speak:hover { background: var(--accent-soft); }
 #app.hide-zh .sc-turn-body .s-zh, #app.hide-zh .sc-turn-body .s-pron { display: none; }
 
+/* 场景句德文对照（默认隐藏，「🇩🇪 德语对照」开关打开才显示；复用 #app.show-de） */
+.sc-turn-body .s-deu { display: none; }
+#app.show-de .sc-turn-body .s-deu { display: flex; flex-wrap: wrap; align-items: baseline; gap: 3px 8px; margin: 0 0 6px; }
+.s-deu-flag { font-size: 12px; flex: 0 0 auto; }
+.s-deu-words { display: inline-flex; flex-wrap: wrap; gap: 2px 9px; }
+.deu-w { display: inline-flex; flex-direction: column; align-items: flex-start; line-height: 1.3; font-size: 14.5px; font-weight: 500; color: var(--ink); }
+.deu-ipa { font-family: var(--font-mono, monospace); font-size: 11px; color: var(--accent); line-height: 1.3; }
+.sc-turn-body .s-deu .s-speak-de { margin: 0; padding: 1px 7px; border-radius: 99px; cursor: pointer; border: 1px solid var(--line, rgba(0,0,0,.12)); background: transparent; font-size: 11.5px; align-self: center; }
+.sc-turn-body .s-deu .s-speak-de:hover { background: var(--accent-soft); }
+[data-theme="dark"] .deu-ipa { color: #E0A96D; }
+
 /* ---------- 教材精读：页签 + Markdown 内容（发音篇 / 语法篇） ---------- */
 .sc-tabs { margin: 0 0 6px; }
 .sc-tabs .chip { font-weight: 600; }

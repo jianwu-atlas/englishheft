@@ -20,12 +20,14 @@
     return esc(en).replace(re, '<mark class="en-hl">$1</mark>');
   }
 
-  /* ---------------- 朗读（en-US） ---------------- */
-  let voice = null;
+  /* ---------------- 朗读（en-US / de-DE） ---------------- */
+  let voice = null;      // 英语音色
+  let deVoice = null;    // 德语音色（场景句德文对照朗读）
   function pickVoice() {
     if (!("speechSynthesis" in window)) return;
     const vs = speechSynthesis.getVoices();
     voice = vs.find(v => /^en[-_]US/i.test(v.lang)) || vs.find(v => /^en([-_]|$)/i.test(v.lang)) || null;
+    deVoice = vs.find(v => /^de[-_]DE/i.test(v.lang)) || vs.find(v => /^de([-_]|$)/i.test(v.lang)) || null;
   }
   if ("speechSynthesis" in window) {
     pickVoice();
@@ -46,6 +48,19 @@
     speechSynthesis.speak(u);
   }
   window.__enSpeak = speak;
+  /* 德文朗读（de-DE，场景句德文对照） */
+  function speakDe(text) {
+    if (!("speechSynthesis" in window)) return;
+    const t = String(text || "").trim();
+    if (!t) return;
+    speechSynthesis.cancel();
+    const u = new SpeechSynthesisUtterance(t);
+    u.lang = "de-DE";
+    u.rate = curSpeed().r;
+    if (deVoice) u.voice = deVoice;
+    speechSynthesis.speak(u);
+  }
+  window.__enSpeakDe = speakDe;
   document.addEventListener("keydown", e => {
     const t = e.target;
     if (t && (t.nodeName === "INPUT" || t.nodeName === "TEXTAREA" || t.isContentEditable)) return;
@@ -64,7 +79,7 @@
   function bindSpeak(root) {
     $$(".s-speak", root).forEach(b => b.addEventListener("click", e => {
       e.stopPropagation();
-      speak(b.dataset.t);
+      b.classList.contains("s-speak-de") ? speakDe(b.dataset.de) : speak(b.dataset.t);
     }));
   }
 
@@ -118,7 +133,7 @@
   function toolBar(extra) {
     return `<div class="sc-bar"><div class="sc-tools">
       <button class="chip ${hideZh() ? "on" : ""}" id="hideZh">${hideZh() ? "👁 显示中文" : "🙈 隐藏中文自测"}</button>
-      <button class="chip ${showDe() ? "on" : ""}" id="deToggle" title="在词条下显示对应德语（数据来自德语站词表与德语教材词列）">🇩🇪 德语对照</button>
+      <button class="chip ${showDe() ? "on" : ""}" id="deToggle" title="显示德文对照：场景句德文（逐词 IPA，可德语朗读）+ 词条对应德语（数据来自德语站词表与教材词列）">🇩🇪 德语对照</button>
       ${extra || ""}
       <button class="chip" id="speedBtn">${curSpeed().label}</button>
       <span class="sc-stat" id="statLine"></span>
@@ -359,6 +374,18 @@
   }
 
   /* ---------------- 场景句 ---------------- */
+  /* 德文对照行：逐词 + 逐词 IPA（仅示意，未映射词留空）；带 de-DE 朗读按钮 */
+  function gerHtml(entry) {
+    const toks = entry.de.split(/\s+/);
+    const words = toks.map((tok, i) => {
+      const ip = (entry.ipa && entry.ipa[i]) || "";
+      return `<span class="deu-w">${esc(tok)}${ip ? `<small class="deu-ipa">${esc(ip)}</small>` : ""}</span>`;
+    }).join(" ");
+    return `<div class="s-deu" title="德文对照 · 逐词 IPA（仅示意，未映射词留空）">
+      <span class="s-deu-flag">🇩🇪</span><span class="s-deu-words">${words}</span>
+      <button class="s-speak s-speak-de" data-de="${escA(entry.de)}" title="德语朗读">🔊</button>
+    </div>`;
+  }
   const S_STATE = { sec: 0, part: 0, onlyNotes: false, w: null };
   function renderSentences(app) {
     const { secs, nS, nN } = stats();
@@ -378,9 +405,11 @@
       hitCount = tSc.sc.sentences.filter(s => (s.en.match(re) || []).length).length;
     }
 
+    const hasDE = typeof EN_DE !== "undefined";
     const blocks = part.scenes.map(sc => {
       const isT = tSc && tSc.sc.no === sc.no && S_STATE.w;
-      const sents = S_STATE.onlyNotes ? sc.sentences.filter(x => x.notes.length) : sc.sentences;
+      const all = sc.sentences.map((s, idx) => ({ s, idx }));
+      const sents = S_STATE.onlyNotes ? all.filter(x => x.s.notes.length) : all;
       return { sc, sents, isT };
     }).filter(b => b.sents.length);
 
@@ -406,7 +435,7 @@
             <span class="sc-badge">${sents.length} 句</span>
             <a class="sc-xlink" href="vocab.html#sc-${sc.no.replace(/\./g, "-")}" title="看本场景的 ${sc.words.length} 个词条">→ ${sc.words.length} 词</a>
             ${doneBtn(sc)}</h2>
-          ${sents.map(s => {
+          ${sents.map(({ s, idx }) => {
             let html;
             if (isT) {
               const base = hlText(s.en, s.hl);
@@ -416,11 +445,13 @@
             } else {
               html = hlText(s.en, s.hl);
             }
+            const g = (hasDE && EN_DE[`${sc.no}:${idx}`]) || null;
             return `
             <div class="sc-turn">
               <span class="sc-spk">·</span>
               <div class="sc-turn-body">
                 <p class="s-de">${html}<button class="s-speak" data-t="${escA(s.en)}" title="朗读">🔊</button></p>
+                ${g ? gerHtml(g) : ""}
                 <p class="s-zh">${esc(s.zh)}</p>
                 ${s.notes.length ? `<div class="en-notes">${s.notes.map(n =>
                   `<p class="en-note-line"><b class="en-note-k">${esc(n.k)}</b>${esc(n.t)}</p>`).join("")}</div>` : ""}

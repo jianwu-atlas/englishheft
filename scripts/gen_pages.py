@@ -41,7 +41,7 @@ SHELL = """<!DOCTYPE html>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,300..700;1,9..144,300..700&family=IBM+Plex+Sans:wght@400;500;600;700&family=IBM+Plex+Mono:ital,wght@0,400;0,500;1,400&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="assets/css/english.css?v=5">
+<link rel="stylesheet" href="assets/css/english.css?v=6">
 <link rel="icon" type="image/svg+xml" href="assets/img/favicon.svg?v=3">
 <link rel="icon" type="image/png" sizes="32x32" href="assets/img/favicon-32.png?v=3">
 <link rel="icon" type="image/png" sizes="16x16" href="assets/img/favicon-16.png?v=3">
@@ -94,7 +94,7 @@ SHELL = """<!DOCTYPE html>
 </main>
 
 <script src="assets/js/data/english.js?v=1"></script>
-<script src="assets/js/site.js?v=4"></script>
+{extra_scripts}<script src="assets/js/site.js?v=5"></script>
 <script src="assets/js/annotate-en.js?v=1"></script>
 <script src="assets/js/offline.js?v=1"></script>
 </body>
@@ -110,9 +110,11 @@ def main() -> int:
         foot = "\n".join(
             '      <a class="footer-chip" href="%s">%s</a>' % (h, z) for h, z, _ in NAV)
         title_zh, title_em = (zh, en) if page != "index" else ("英语单词", "学习站")
+        # 场景句页额外加载 en-de.js（德文对照 + 逐词 IPA，由 scripts/build_en_de.py 生成）
+        extra = '<script src="assets/js/data/en-de.js?v=1"></script>\n' if page == "sentences" else ""
         html = SHELL.format(page=page, title=f"{zh} · {en}", desc=desc, nav=nav, foot=foot,
                             kicker="15000 英语单词口袋书", kickerEn=en,
-                            titleZh=title_zh, titleEm=title_em)
+                            titleZh=title_zh, titleEm=title_em, extra_scripts=extra)
         (ROOT / fname).write_text(html, encoding="utf-8")
         print(f"  ✓ {fname}")
     print(f"[✓] 已生成 {len(PAGES)} 个页面")
