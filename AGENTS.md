@@ -75,7 +75,7 @@
 
 ## 更新记录
 
-- 2026-10-15（**首页 logo 放大 + 内容左边距加宽 + 原文 PDF 在线阅读**，commit `<TBD>`）：
+- 2026-10-15（**首页 logo 放大 + 内容左边距加宽 + 原文 PDF 在线阅读**，commit `663a591`）：
   - **① logo 放大**：`.brand-mark` 34px→**44px**（border-radius 9px→11px）。双色块 logo 为填充色块（非细线稿），放大无小尺寸稀释问题；德语站金印 logo 仍 34px（两站独立，互不影响）。
   - **② 内容左边距加宽**：`.page-wrap` 水平 padding 桌面 **24px→44px**（两处重复定义同改）/ 小屏 **18px→28px** / print 保持 0——与德语站对齐（Jian「左边太挤，留点空间」）。
   - **③ 原文 PDF 在线阅读**：新增 **`pdf.html`**（独立壳手工维护：工具条「📖 在线阅读 / ⬇ 下载 PDF」+ `<iframe>` 阅读器，无 `#app`，仅载 site.js 走 initTheme + 内联 toggle；镜像德语站 `lbk-viewer` iframe 方案）。源 PDF 从德语站 `assets/lehrbuch/E1_15000-en-words.pdf`（**同一文件，sha256 一致**）拷入 `assets/15000-en-words.pdf`（6.5 MB / 1370 页，有文本层）。首页 `renderStart` 加第 5 张入口卡「原文 PDF」；`gen_pages.py` NAV 加「原文」→ **6 页导航 + 页脚 chip 均含「原文」**。
