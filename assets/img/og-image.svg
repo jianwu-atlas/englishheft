@@ -1,0 +1,29 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="630" viewBox="0 0 1200 630">
+  <!-- 纸底 -->
+  <rect width="1200" height="630" fill="#F6F1E7"/>
+  <rect x="0" y="0" width="1200" height="6" fill="#C9A227"/>
+  <rect x="0" y="624" width="1200" height="6" fill="#C9A227"/>
+
+  <!-- 左侧主标（Gilded Seal · Englishheft） -->
+  <g transform="translate(118,115) scale(0.78)">
+    <rect x="0" y="0" width="512" height="512" rx="118" fill="#201B14"/>
+    <rect x="24" y="24" width="464" height="464" rx="98" fill="none" stroke="#C9A227" stroke-opacity="0.16" stroke-width="2"/>
+    <text x="256" y="312" font-family="Georgia, 'Times New Roman', serif" font-size="266" font-weight="700" fill="#C9A227" text-anchor="middle">E</text>
+    <rect x="192" y="340" width="128" height="6" rx="3" fill="#C9A227"/>
+    <circle cx="210" cy="392" r="15" fill="#2456A6"/>
+    <circle cx="256" cy="392" r="15" fill="#B03048"/>
+    <circle cx="302" cy="392" r="15" fill="#2E7D5B"/>
+    <circle cx="256" cy="432" r="9" fill="#009EE7"/>
+  </g>
+
+  <!-- 右侧 wordmark -->
+  <text x="580" y="288" font-family="Georgia, 'Times New Roman', serif" font-size="64" font-weight="700" fill="#201B14">ENGLISHHEFT</text>
+  <rect x="584" y="322" width="286" height="5" rx="2.5" fill="#C9A227"/>
+  <text x="585" y="378" font-family="Georgia, 'Times New Roman', serif" font-size="30" fill="#8A7D66" letter-spacing="4">Jian &#183; 15000 ENGLISH WORDS</text>
+  <text x="585" y="424" font-family="Georgia, 'Times New Roman', serif" font-size="24" fill="#4A4234" letter-spacing="0.5">Vocabulary &#183; Sentences &#183; Phonetics &#183; Sections</text>
+  <text x="585" y="470" font-family="Georgia, 'Times New Roman', serif" font-size="22" fill="#009EE7" letter-spacing="0.5">7,052 words &#183; 4,941 sentences &#183; 51 phonemes</text>
+
+  <!-- jwlab 出品方署名（右下角，低调） -->
+  <circle cx="1082" cy="594" r="4" fill="#C9A227"/>
+  <text x="1150" y="601" font-family="Georgia, 'Times New Roman', serif" font-size="22" font-style="italic" fill="#8A7D66" text-anchor="end">jwlab</text>
+</svg>

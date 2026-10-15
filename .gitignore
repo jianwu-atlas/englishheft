@@ -1,3 +1,4 @@
 dist/
+.edgeone/
 .DS_Store
 .env

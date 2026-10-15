@@ -28,6 +28,9 @@
 | `scripts/extract_blue.py` | 从 PDF 按字符取色抽取**书本蓝色强调**（RGB 0,158,231）→ `en15000-blue.json`（12783 段） |
 | `assets/js/annotate-en.js` | **三态音标标注**（关 / 常用 / 全部）：词典取自本书 7052 条音标，ruby 标注，右下角浮动开关 |
 | `scripts/_test_en_features.py` | 三项新功能 Playwright 测试（音标三态 / 蓝色强调 / 中德对照） |
+| `assets/img/favicon.svg` / `og-image.svg` | **Logo 源文件**（E 印章 + 书本蓝第四点 #009EE7，jwlab 设计语言）；改 logo 只改这两个 SVG |
+| `scripts/gen_logos.py` | Logo SVG → PNG 栅格化（Playwright Chromium）：favicon-16/32/48、apple-touch-icon、icon-192/512/512-maskable、logo-mark、og-image |
+| `scripts/_check_logo.py` | Logo 本地验证（7 项断言：SVG 内容 / 引用版本号 / 导航 mark 渲染） |
 | `assets/js/data/english.js` | 脚本生成，**勿手改**（1059 KB） |
 
 ## 数据源与蒸馏要点
@@ -70,6 +73,7 @@
 
 ## 更新记录
 
+- 2026-10-15（英语站独立 logo）：替换建站时从德语站拷来的「D 印章」为**「E 印章」**——同族设计（深印泥 #201B14 + 金字 E + 下划线 + 三点 #2456A6/#B03048/#2E7D5B + jwlab），**第四点小蓝点 #009EE7**（= 书本强调蓝 RGB 0,158,231）作为英语站签名。源：`assets/img/favicon.svg` + `og-image.svg`（ENGLISHHEFT 字标）；`scripts/gen_logos.py` 栅格化 9 个位图。一致性：nav 品牌 mark 走 CSS `.brand-mark` 背景（`favicon.svg?v=33`）、HTML favicon 组 `?v=2`、新增 `og:image`、manifest 图标换新 PNG；`_check_logo.py` 7 项断言全过（含头部渲染截图）。
 - 2026-10-15（三项新功能：三态音标 / 书本蓝色强调 / 中德对照）：
   - **① 三态音标（参照德语站）**：新增 `assets/js/annotate-en.js`。词典**取自本书自身 7052 条音标**；`关 → 常用 → 全部` 循环，右下角浮动开关（全部挡金色，同德语站）；「常用」跳过 the / a / is / of 等基础功能词；ruby 标注，localStorage `englishheft_ipa`。实测：0 → 94（常用）→ 104（全部）处。
   - **② 书本蓝色强调**：新增 `scripts/extract_blue.py`，用 `pdfplumber` 按字符取 `non_stroking_color` 定位蓝色（**RGB 0,158,231**）→ **12783 段 / 1323 页**。蒸馏时按**句子所在页 ±1 页**匹配、**排除本场景词表词** → 得**句内强调 1114 句**；前端渲染为 `<mark class="en-hl">`；词表英文词亦按原书用蓝色（`--en-blue`）。
