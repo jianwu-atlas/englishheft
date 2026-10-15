@@ -69,7 +69,7 @@ body::before {
 .nav-brand { display: flex; align-items: center; gap: 11px; text-decoration: none; color: var(--ink); }
 .brand-mark {
   width: 34px; height: 34px; border-radius: 9px; flex-shrink: 0;
-  background: url("../img/favicon.svg?v=33") center/100% 100% no-repeat;
+  background: url("../img/favicon.svg?v=34") center/100% 100% no-repeat;
   color: transparent; overflow: hidden;
 }
 .nav-brand-text { display: flex; flex-direction: column; line-height: 1.05; }
@@ -694,7 +694,7 @@ body::before {
 [data-theme="dark"] .hero { background: radial-gradient(120% 160% at 88% -10%, rgba(201,162,39,.18), transparent 55%), radial-gradient(100% 140% at -8% 110%, rgba(180,85,29,.16), transparent 50%), #0F0D0A; }
 [data-theme="dark"] .focus-box { background: #2A2118; }
 [data-theme="dark"] .verb-chip { background: #33261A; border-color: #4A3524; }
-[data-theme="dark"] .brand-mark { background: var(--ink); color: #17140F; }
+/* .brand-mark 的暗色覆写已移除：双色块 logo 本身透明底，深浅背景通用 */
 [data-theme="dark"] .s-zh { border-left-color: #8A6C2F; }
 [data-theme="dark"] .s-ipa { background: #33261A; color: #E0A96D; }
 [data-theme="dark"] .para-notes { background: #2A2118; border-color: #4A3524; border-left-color: #C4652A; }

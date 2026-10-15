@@ -1,18 +1,13 @@
 <svg xmlns="http://www.w3.org/2000/svg" width="512" height="512" viewBox="0 0 512 512">
-  <!-- 墨黑圆角方块：与德语站同一枚印章几何 -->
-  <rect x="0" y="0" width="512" height="512" rx="118" fill="#201B14"/>
-  <!-- 极细内框：手工压印的边界感 -->
-  <rect x="24" y="24" width="464" height="464" rx="98" fill="none" stroke="#C9A227" stroke-opacity="0.16" stroke-width="2"/>
-  <!-- 主字母 E：Englishheft -->
-  <text x="256" y="288" font-family="Georgia, 'Times New Roman', serif" font-size="248" font-weight="700" fill="#C9A227" text-anchor="middle">E</text>
-  <!-- 单一细金线：比字母更短，克制收束 -->
-  <rect x="196" y="314" width="120" height="6" rx="3" fill="#C9A227"/>
-  <!-- 三点：jwlab 系列印记（与德语站同色，保持家族识别） -->
-  <circle cx="210" cy="364" r="15" fill="#2456A6"/>
-  <circle cx="256" cy="364" r="15" fill="#B03048"/>
-  <circle cx="302" cy="364" r="15" fill="#2E7D5B"/>
-  <!-- 第四点：Englishheft 独有的书本蓝色（取自原书强调色 RGB 0,158,231） -->
-  <circle cx="256" cy="412" r="9" fill="#009EE7"/>
-  <!-- jwlab 出品方 maker's mark -->
-  <text x="256" y="462" font-family="Georgia, 'Times New Roman', serif" font-size="34" font-style="italic" fill="#C9A227" fill-opacity="0.82" text-anchor="middle" letter-spacing="4">jwlab</text>
+  <!-- 完全参考 Jian 指定的双色块 logo（500×500 源图，取色 #003366 / #00CCCC） -->
+  <!-- 左：深海军蓝平行色块 -->
+  <polygon points="185,64 281,64 265,264 169,264" fill="#003366"/>
+  <!-- 右：青绿色平行色块（更宽、下移；顶部被拼音文字压住，呈「文字下切入块」形制） -->
+  <polygon points="244,112 348,112 330,340 226,340" fill="#00CCCC"/>
+  <!-- 白色「英语」二字：跨两色块，左块承「英」，右块承「语」 -->
+  <text x="214" y="222" font-family="'PingFang SC','Noto Sans CJK SC','Microsoft YaHei',sans-serif" font-size="54" font-weight="800" fill="#FFFFFF" text-anchor="middle">英</text>
+  <text x="300" y="220" font-family="'PingFang SC','Noto Sans CJK SC','Microsoft YaHei',sans-serif" font-size="54" font-weight="800" fill="#FFFFFF" text-anchor="middle">语</text>
+  <!-- 青绿拼音 Ying Yu：右上角，两行，底边切入右块顶部 -->
+  <text x="264" y="84" font-family="Arial,Helvetica,sans-serif" font-size="20" font-weight="800" fill="#00CCCC" letter-spacing="0.5">Ying</text>
+  <text x="264" y="108" font-family="Arial,Helvetica,sans-serif" font-size="20" font-weight="800" fill="#00CCCC" letter-spacing="0.5">Yu</text>
 </svg>
