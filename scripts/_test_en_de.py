@@ -77,7 +77,7 @@ try:
         fn = pg.evaluate("() => typeof window.__enSpeakDe === 'function'")
         assert fn, "window.__enSpeakDe 应为函数"
 
-        # 切到其它无数据的 Part 不应报错（EN_DE 未命中 → 不渲染德文行，仍正常显示英文）
+        # 切到其它 Part：全部 17 大类均已补齐德文数据，应正常渲染德文行 + 英文句
         # Section 2 的 chip
         pg.goto(B + "sentences.html", wait_until="networkidle")
         pg.wait_for_timeout(200)
@@ -85,11 +85,11 @@ try:
         pg.evaluate("() => { const t=document.querySelectorAll('.sc-tabs .chip')[1]; if(t) t.click(); }")
         pg.wait_for_timeout(300)
         n2 = pg.locator(".s-deu").count()
-        print(f"[i] Section 2（无德文数据）.s-deu 数量 = {n2}")
-        # 允许为 0（无数据）；关键是不报错、英文仍在
+        print(f"[i] Section 2（已有德文数据）.s-deu 数量 = {n2}")
+        assert n2 > 0, "Section 2 现已有德文数据，应渲染德文行"
         n_en = pg.locator(".sc-turn-body .s-de").count()
         print(f"[i] Section 2 英文句行数 = {n_en}")
-        assert n_en > 0, "无德文数据的 Part 仍应正常渲染英文句"
+        assert n_en > 0, "Section 2 应正常渲染英文句"
 
         browser.close()
 

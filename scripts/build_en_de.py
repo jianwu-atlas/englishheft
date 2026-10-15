@@ -18,7 +18,8 @@ build_en_de.py — 生成英语站场景句「德文对照 + 逐词 IPA」数据
     **base 优先**（冲突时保留快照值），supplement 只填补 base 没有的词。
   - 命中词典 → 该词 IPA；未命中 → 空串 ""（Jian 拍板「仅示意」，空缺可接受）。
 
-仅试点 Section 1（179 句）。铺开到其它 Section 时，先补 de_translations.json，再重跑本脚本。
+数据随 de_translations.json 增长：每补一个 Section 的英→德翻译，再重跑本脚本即可。
+IPA 统一输出「裸」风格（base 快照无括号；w6000/espeak 来源的括号值会被剥掉）。
 """
 import json
 import os
@@ -74,6 +75,12 @@ def main():
         for tok in tokens:
             s = stem(tok)
             hit = ipa.get(s, "") if s else ""
+            # 统一为「裸 IPA」风格（与 base 快照 / Section 1 已上线基线一致）：
+            # 去掉 w6000/espeak 来源词值首尾的方括号 [..]。
+            if hit:
+                hit = hit.strip()
+                if hit.startswith("[") and hit.endswith("]"):
+                    hit = hit[1:-1].strip()
             if hit:
                 covered += 1
                 if s in supp and s not in base:
@@ -97,8 +104,8 @@ def main():
     payload = json.dumps(ordered, ensure_ascii=False)
     with open(OUT_PATH, "w", encoding="utf-8") as f:
         f.write("// en-de.js — 由 scripts/build_en_de.py 生成，勿手改。\n")
-        f.write("// 英语站场景句「德文对照 + 逐词 IPA」。当前试点：Section 1（179 句）。\n")
-        f.write("// ipa[] 与 de.split(/\\s+/) 逐词对齐；空串 = 该词未映射 IPA（仅示意）。\n")
+        f.write(f"// 英语站场景句「德文对照 + 逐词 IPA」。当前：{len(ordered)} 句（随 de_translations.json 增长）。\n")
+        f.write("// ipa[] 与 de.split(/\\s+/) 逐词对齐，统一裸 IPA；空串 = 该词未映射 IPA（仅示意）。\n")
         f.write(f"const EN_DE = {payload};\n")
 
     print(f"wrote {os.path.relpath(OUT_PATH, ROOT)}")
