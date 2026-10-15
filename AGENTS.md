@@ -14,7 +14,7 @@
 |---|---|
 | `index.html` | 首页：总量统计 + **5 张入口卡**（含原文 PDF）+ 来源说明 |
 | `vocab.html` | **词汇**：17 大类 → **Part 二级导航** → 场景，493 场景 / 7052 词条，三行格式 + 逐条 🔊；**全局搜索**（EN/中文/音标）、**单词联动链接**（→场景句）、**Anki 导出**（本 Part）、**进度打勾** |
-| `sentences.html` | **场景句**：4941 句（英文/中文）+ **1272 条句子解析**（● 短语用法 / ★ 单词说明 / ■ 句型搭配）；可「只看有解析」；**单词联动**（`?w=词` 横幅 + 青绿高亮）、**场景互跳**、**进度打勾**、**🇩🇪 德文对照**（逐词 IPA + de-DE 朗读，试点 Section 1） |
+| `sentences.html` | **场景句**：4941 句（英文/中文）+ **1272 条句子解析**（● 短语用法 / ★ 单词说明 / ■ 句型搭配）；可「只看有解析」；**单词联动**（`?w=词` 横幅 + 青绿高亮）、**场景互跳**、**进度打勾**、**🇩🇪 德文对照**（逐词 IPA + de-DE 朗读，**全部 17 大类 / 4941 句**） |
 | `phonetics.html` | **语音·音标**：**51 个音素**（25 元音 + 26 辅音）表，每音素配**书中例词** + 出现次数；**点行音素反查**（→`vocab.html?ph=…`） |
 | `sections.html` | **大类导览**：17 个 Section 的构成（Part / 场景清单）与学习建议；**学习进度**（总进度条 + 大类徽章 + 场景 chip ✓） |
 | `pdf.html` | **原文 PDF**：在线翻阅《15000英语单词口袋书》原版（`<iframe>` 阅读器，镜像德语站 `lbk-viewer`）+ 下载按钮。**独立壳手工维护**（无 `#app`，仅载 site.js 走 initTheme + initBurger + 内联 toggle）；`assets/15000-en-words.pdf`（6.5 MB / 1370 页） |
@@ -34,12 +34,13 @@
 | `scripts/gen_logos.py` | Logo SVG → PNG 栅格化（Playwright Chromium）：favicon-16/32/48、apple-touch-icon、icon-192/512/512-maskable、logo-mark、og-image |
 | `scripts/_check_logo.py` | Logo 本地验证（7 项断言：SVG 内容 / 引用版本号 / 导航 mark 渲染） |
 | `assets/js/data/english.js` | 脚本生成，**勿手改**（1059 KB） |
-| `assets/js/data/en-de.js` | **德文对照数据**，由 `build_en_de.py` 生成，**勿手改**。`const EN_DE = { "场景号:句idx": {de, ipa:[…]} }`；`ipa[]` 与 `de.split(/\s+/)` 逐词对齐，空串=未映射 IPA。当前**试点 Section 1（179 句）** |
-| `data/de_translations.json` | **英→德翻译**（179 句，LLM 生成），key=`场景号:句idx`；`build_en_de.py` 输入源之一 |
+| `assets/js/data/en-de.js` | **德文对照数据**，由 `build_en_de.py` 生成，**勿手改**。`const EN_DE = { "场景号:句idx": {de, ipa:[…]} }`；`ipa[]` 与 `de.split(/\s+/)` 逐词对齐，空串=未映射 IPA。当前**全部 17 大类（4941 句，69% 逐词 IPA）** |
+| `data/de_translations.json` | **英→德翻译**（4941 句 = 全书场景句，LLM 生成），key=`场景号:句idx`；`build_en_de.py` 输入源之一。各 Section 的中间产物 `tr_secN.json`/`work_secN.json` **不入库**（仅留合并后的本文件） |
 | `data/de_ipa_dict.json` | **德语词→IPA 字典**（1249 词，快照自德语站 `pron.js`+`wortliste.js`，已剔除 word==ipa 回退项）；`build_en_de.py` 权威输入源 |
 | `data/de_ipa_supplement.json` | **高频功能词/变位 IPA 补全**（50 词：das/an/am/so/als/da/mal/diese + 常见变位 hast/wird/wurde/kannst 等）；填补快照缺口，**base 优先**（冲突保留快照值）；`build_en_de.py` 可选输入源 |
-| `scripts/build_en_de.py` | 读 `data/`（translations + ipa_dict + ipa_supplement）→ 键归一化（小写/ß→ss，base 优先合并）→ 分词逐词查 IPA → 生成 `en-de.js`。当前 **IPA 词覆盖 72%**。铺开其它 Section 时先补 `de_translations.json` 再重跑 |
-| `scripts/_test_en_de.py` | 德文对照 Playwright 测试（默认隐藏 / 开关显形 / 逐词 IPA / de-DE 朗读函数 / 无数据 Part 优雅降级 / **无 JS 错误**；**需 anaconda 解释器**） |
+| `scripts/build_en_de.py` | 读 `data/`（translations + ipa_dict + ipa_supplement）→ 键归一化（小写/ß→ss，base 优先合并）→ 分词逐词查 IPA → 生成 `en-de.js`。当前 **IPA 词覆盖 69%**（全书 4941 句；无形态词干还原，属预期基线）。输出统一「裸 IPA」风格（剥 w6000/espeak 首尾 `[]`），头部句数随数据动态。**每补一批 Section 到 `de_translations.json` 后重跑即可** |
+| `scripts/_extract_work.js` | 抽取某 Section 的「英文/中文对照待译清单」→ `data/work_secN.json`（`{key,en,zh}`）；用法 `node scripts/_extract_work.js data/work_secN.json 13 14 15`（section 号为字符串） |
+| `scripts/_test_en_de.py` | 德文对照 Playwright 测试（默认隐藏 / 开关显形 / 逐词 IPA / de-DE 朗读函数 / Section 2 **已有数据**应渲染 / **无 JS 错误**；**需 anaconda 解释器**：`/Users/Jack/opt/anaconda3/bin/python3 scripts/_test_en_de.py`） |
 
 ## 数据源与蒸馏要点
 
@@ -81,6 +82,16 @@
 - 仓库：https://github.com/jianwu-atlas/englishheft （描述用中文）
 
 ## 更新记录
+
+- 2026-10-16（**场景句德文对照铺开至全部 17 大类（4941 句）**，commit `0f61c7d`）：
+  - **背景**：试点 Section 1（179 句，`68cbe6b`）Jian 复核满意后拍板「继续全部译完并部署」，本条即终局落地。
+  - **翻译管线（逐波）**：`_extract_work.js` 抽待译清单 → 按**英文原句**英→德 LLM 译（中/英冲突以英文为准，A1-A2 自然口语）→ 写 `data/tr_secN.json` → 校验（unique / 无空 / 与 work 1:1 / 与已有 0 冲突）→ 合并进 `data/de_translations.json` → 重跑 `build_en_de.py`。波次：sec13-15（730）→ sec16-17（429）。
+  - **数据**：`de_translations.json` **3782→4941**（17 大类全齐：1=179/2=380/3=754/4=250/5=299/6=160/7=180/8=170/9=510/10=300/11=240/12=360/13=470/14=130/15=130/16=249/17=180）；重建 `en-de.js`（4941 句，**69% 逐词 IPA**，**0 方括号污染**）。
+  - **`build_en_de.py` 增强**：输出统一「裸 IPA」（剥 w6000/espeak 来源词值首尾 `[]`，与 Section 1 已上线基线一致）；头部注释句数改为随数据动态。
+  - **版本**：`gen_pages.py` 里 `english.js ?v=1→v=2`（**含 #101 的 4 处源数据修正**一并破缓存）、`en-de.js ?v=1→v=2`，regen 5 页 + `pack_en.py` 打包 `dist/`。
+  - **`_test_en_de.py`**：Section 2 断言由「无德文数据」改为「已有德文数据」（全书已无缺数据 Section）。
+  - **验证**：`_test_en_de.py`（Section 1 49 行 / Section 2 180 行 / 0 JS 错误）+ `_test_en_links.py`（32 断言 / 0 JS 错误）**全绿**。
+  - **部署**：GitHub Pages（push `main` 即发，`jianwu-atlas.github.io/englishheft/`）+ Cloudflare（`englishheft.pages.dev`，wrangler 上传 26 文件）。**EdgeOne 依规则跳过**（已停用）。
 
 - 2026-10-15（**vocab 场景卡左边距修复**，Jian 反馈「还是老问题，左边太靠边界」@vocab.html）：
   - **根因**：与德语站 #90 同根——`.card` 基类无 padding，vocab/sentences 页的场景卡 `.sc-scene` 亦无内边距，卡内 `.en-words` 网格与德文对照行 `.en-de` 紧贴卡片左缘（Playwright 实测内容 gapL≈1px）。
