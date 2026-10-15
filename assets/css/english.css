@@ -1347,3 +1347,40 @@ ruby.dh-ipa:hover rt { color: var(--gold); }
   .en-word .en-en { font-size: 15px; }
   .en-hero-num { font-size: 40px; }
 }
+
+/* ============================================================
+   三态音标标注 / 书本蓝色强调 / 德语对照
+   ============================================================ */
+/* 词级音标（ruby，与德语站一致） */
+ruby.ipa { ruby-position: over; }
+ruby.ipa rt { font-size: .58em; line-height: 1.1; color: var(--ink-3); font-family: var(--font-mono, monospace); letter-spacing: .01em; }
+ruby.ipa:hover rt { color: var(--accent); }
+
+/* 音标开关（右下角浮动，参照德语站） */
+#ipaToggle {
+  position: fixed; right: 18px; bottom: 18px; z-index: 70;
+  padding: 10px 16px; border-radius: 99px;
+  background: var(--ink); color: var(--paper-2);
+  border: 1px solid var(--ink);
+  font-family: inherit; font-size: 12.5px; font-weight: 600;
+  cursor: pointer; box-shadow: 0 8px 24px rgba(32,27,20,.28);
+  transition: transform .18s, background .18s;
+}
+#ipaToggle:hover { transform: translateY(-2px); }
+#ipaToggle.all { background: var(--gold, #b08d3f); border-color: var(--gold, #b08d3f); color: #fff; }
+[data-theme="dark"] #ipaToggle { background: var(--paper-2, #2a2723); color: var(--ink, #f2efe6); border-color: var(--paper-2, #2a2723); }
+
+/* 书本蓝色强调（原书 RGB 0,158,231） */
+:root { --en-blue: #0090d6; --en-blue-soft: rgba(0,144,214,.14); }
+[data-theme="dark"] { --en-blue: #4dc2f5; --en-blue-soft: rgba(77,194,245,.2); }
+.en-hl { background: var(--en-blue-soft); color: var(--en-blue); border-radius: 3px; padding: 0 2px; font-weight: 600; }
+.en-word .en-en { color: var(--en-blue); }          /* 书中词表的英文词即为蓝色 */
+
+/* 德语对照（默认隐藏，开关打开才显示） */
+.en-word .en-de { display: none; margin: 4px 0 0; font-size: 12px; line-height: 1.5; color: var(--ink-3); font-style: italic; }
+#app.show-de .en-word .en-de { display: block; }
+
+@media (max-width: 900px) {
+  #ipaToggle { right: 14px; bottom: 14px; padding: 9px 13px; font-size: 12px; }
+  ruby.ipa rt { font-size: .55em; }
+}

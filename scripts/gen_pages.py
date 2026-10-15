@@ -92,6 +92,7 @@ SHELL = """<!DOCTYPE html>
 
 <script src="assets/js/data/english.js?v=1"></script>
 <script src="assets/js/site.js?v=1"></script>
+<script src="assets/js/annotate-en.js?v=1"></script>
 <script src="assets/js/offline.js?v=1"></script>
 </body>
 </html>

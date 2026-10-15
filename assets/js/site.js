@@ -12,6 +12,13 @@
   const $$ = (s, r) => Array.from((r || document).querySelectorAll(s));
   const esc = s => String(s).replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
   const escA = s => esc(s).replace(/"/g, "&quot;");
+  /* 把句子中被书本标蓝的短语包成 <mark>（长短语优先，一次扫描） */
+  function hlText(en, hl) {
+    const list = (hl || []).filter(Boolean).sort((a, b) => b.length - a.length);
+    if (!list.length) return esc(en);
+    const re = new RegExp("(" + list.map(h => h.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")).join("|") + ")", "gi");
+    return esc(en).replace(re, '<mark class="en-hl">$1</mark>');
+  }
 
   /* ---------------- 朗读（en-US） ---------------- */
   let voice = null;
@@ -61,10 +68,15 @@
     }));
   }
 
+  /* ---------------- 中德对照（localStorage 记忆） ---------------- */
+  const DEKEY = "englishheft_showde";
+  const showDe = () => localStorage.getItem(DEKEY) === "1";
+
   /* ---------------- 顶部工具条 ---------------- */
   function toolBar(extra) {
     return `<div class="sc-bar"><div class="sc-tools">
       <button class="chip ${hideZh() ? "on" : ""}" id="hideZh">${hideZh() ? "👁 显示中文" : "🙈 隐藏中文自测"}</button>
+      <button class="chip ${showDe() ? "on" : ""}" id="deToggle" title="在词条下显示对应德语（数据来自德语站词表与德语教材词列）">🇩🇪 德语对照</button>
       ${extra || ""}
       <button class="chip" id="speedBtn">${curSpeed().label}</button>
       <span class="sc-stat" id="statLine"></span>
@@ -72,9 +84,15 @@
   }
   function bindTools(app, onToggle) {
     app.classList.toggle("hide-zh", hideZh());
+    app.classList.toggle("show-de", showDe());
     const hz = $("#hideZh", app);
     if (hz) hz.addEventListener("click", () => {
       localStorage.setItem(HKEY, hideZh() ? "0" : "1");
+      onToggle ? onToggle() : render(app);
+    });
+    const dt = $("#deToggle", app);
+    if (dt) dt.addEventListener("click", () => {
+      localStorage.setItem(DEKEY, showDe() ? "0" : "1");
       onToggle ? onToggle() : render(app);
     });
     const sp = $("#speedBtn", app);
@@ -85,6 +103,7 @@
       sp.textContent = nx.label;
     });
     bindSpeak(app);
+    if (window.__enApplyIpa) window.__enApplyIpa();
   }
   function copyBtn(id, label, getText) {
     const b = $(id);
@@ -173,6 +192,7 @@
                 <p class="en-en">${esc(w.en)}<button class="s-speak" data-t="${escA(w.en)}" title="朗读">🔊</button></p>
                 <p class="s-pron">${esc(w.ipa)}</p>
                 <p class="en-zh">${esc(w.zh)}<span class="en-pos">${esc(w.pos)}</span></p>
+                ${w.de ? `<p class="en-de">🇩🇪 ${esc(w.de)}</p>` : ""}
               </div>`).join("")}
           </div>
         </section>`).join("")}`;
@@ -210,7 +230,7 @@
             <div class="sc-turn">
               <span class="sc-spk">·</span>
               <div class="sc-turn-body">
-                <p class="s-de">${esc(s.en)}<button class="s-speak" data-t="${escA(s.en)}" title="朗读">🔊</button></p>
+                <p class="s-de">${hlText(s.en, s.hl)}<button class="s-speak" data-t="${escA(s.en)}" title="朗读">🔊</button></p>
                 <p class="s-zh">${esc(s.zh)}</p>
                 ${s.notes.length ? `<div class="en-notes">${s.notes.map(n =>
                   `<p class="en-note-line"><b class="en-note-k">${esc(n.k)}</b>${esc(n.t)}</p>`).join("")}</div>` : ""}

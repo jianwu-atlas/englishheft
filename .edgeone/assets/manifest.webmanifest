@@ -1,0 +1,23 @@
+{
+  "name": "Englishheft · 15000 英语单词口袋书",
+  "short_name": "Englishheft",
+  "description": "《15000 英语单词口袋书》完整蒸馏：17 大类 / 493 场景 / 7000+ 词条，英文 / 音标 / 中文三行对照，附场景句与句子解析。支持离线使用。",
+  "lang": "zh-CN",
+  "dir": "ltr",
+  "start_url": "./index.html",
+  "scope": "./",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#f6f2e8",
+  "theme_color": "#1c1a16",
+  "icons": [
+    { "src": "assets/img/icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any" },
+    { "src": "assets/img/icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any" },
+    { "src": "assets/img/icon-512-maskable.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable" }
+  ],
+  "shortcuts": [
+    { "name": "词汇", "url": "./vocab.html" },
+    { "name": "场景句", "url": "./sentences.html" },
+    { "name": "语音·音标", "url": "./phonetics.html" }
+  ]
+}

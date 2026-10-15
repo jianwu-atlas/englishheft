@@ -20,6 +20,8 @@ from collections import Counter, defaultdict
 from pathlib import Path
 
 RAW = Path.home() / ".workbuddy/wiki-knowledge-en/raw/en15000-ocr.txt"
+BLUE = Path.home() / ".workbuddy/wiki-knowledge-en/raw/en15000-blue.json"
+DE_SITE = Path(__file__).resolve().parent.parent.parent / "deutschheft/assets/js/data"
 PDF = Path("/Users/Jack/Library/CloudStorage/OneDrive-Personal/01_个人_Personal/2_书籍_Books/"
            "15000英语单词口袋书-最重要.pdf")
 ROOT = Path(__file__).resolve().parent.parent
@@ -87,6 +89,96 @@ def tokenize_ipa(ipa: str) -> list[str]:
     return out
 
 
+def load_blue() -> dict[int, list[str]]:
+    if not BLUE.exists():
+        print("    ⚠️ 无蓝色标注文件（先跑 scripts/extract_blue.py）")
+        return {}
+    data = json.loads(BLUE.read_text(encoding="utf-8"))
+    by_page: dict[int, list[str]] = defaultdict(list)
+    for x in data:
+        by_page[x["page"]].append(x["text"])
+    return by_page
+
+
+def load_zh2de() -> dict[str, str]:
+    """建「中文 → 德语」映射，三个来源合并：
+       ① 德语站全站词表 wortliste.js
+       ② 德语站 VOCAB（deutsch-data.js 的 sentences/词卡）
+       ③ 德语教材 OCR 的「德语 / 中文意思」词列（约 1400 词，覆盖面最大）
+    """
+    m: dict[str, str] = {}
+    wl = DE_SITE / "wortliste.js"
+    if wl.exists():
+        txt = wl.read_text(encoding="utf-8")
+        for w, zh in re.findall(r'\{"w":"([^"]+)","n":\d+,"ipa":"[^"]*","zh":"([^"]+)"', txt):
+            for z in re.split(r"[；;，,/、]", zh):
+                z = z.strip()
+                if z and z not in m:
+                    m[z] = w
+    dd = DE_SITE / "deutsch-data.js"
+    if dd.exists():
+        txt = dd.read_text(encoding="utf-8")
+        for de, zh in re.findall(r'\{ de: "([^"]+)", zh: "([^"]+)"', txt):
+            for z in re.split(r"[；;，,/、]", zh):
+                z = z.strip()
+                if z and z not in m:
+                    m[z] = de
+    # ③ 德语教材 OCR 词列（德语 → 中文意思 → 汉语谐音 三段式）
+    de_ocr = Path.home() / ".workbuddy/wiki-knowledge/raw/lingjichu-sucheng-ocr.txt"
+    if de_ocr.exists():
+        lines = de_ocr.read_text(encoding="utf-8", errors="ignore").split("\n")
+        i, n = 0, len(lines)
+        while i < n:
+            if lines[i].strip() == "德语":
+                de, zh, j = [], [], i + 1
+                while j < n and lines[j].strip() != "中文意思":
+                    t = lines[j].strip()
+                    if t and t not in ("单词", "熟悉场景必需的单词"):
+                        de.append(t)
+                    j += 1
+                j += 1
+                while j < n and lines[j].strip() != "汉语谐音":
+                    t = lines[j].strip()
+                    if t:
+                        zh.append(t)
+                    j += 1
+                for a, b in zip(de, zh):
+                    b = b.strip()
+                    if b and len(b) <= 12 and b not in m:
+                        m[b] = a
+                i = j
+            else:
+                i += 1
+    return m
+
+
+def de_of(zh: str, zh2de: dict[str, str]) -> str:
+    """中文释义 → 德语（去掉括号内容后再试一次）"""
+    for cand in (zh, re.sub(r"[（(].*?[)）]", "", zh).strip()):
+        if cand and cand in zh2de:
+            return zh2de[cand]
+    return ""
+
+
+def find_hl(sentence: str, page: int, blue: dict[int, list[str]], vocab: set[str]) -> list[str]:
+    """句子里的蓝色强调短语（排除本场景词表词；取相邻页，长短语优先）"""
+    if not blue:
+        return []
+    cand = set()
+    for p in (page - 1, page, page + 1):
+        cand.update(blue.get(p, []))
+    low = sentence.lower()
+    hits = sorted((c for c in cand
+                   if len(c) > 1 and c.lower() not in vocab and c.lower() in low),
+                  key=len, reverse=True)
+    # 去掉被更长短语包含的
+    out = []
+    for h in hits:
+        if not any(h.lower() in o.lower() for o in out):
+            out.append(h)
+    return out
+
+
 def load_toc() -> tuple[dict[str, str], dict[str, str]]:
     import pypdf
     r = pypdf.PdfReader(str(PDF))
@@ -114,6 +206,18 @@ def main() -> int:
         sys.exit(f"❌ 缺少全文 {RAW}")
     lines = RAW.read_text(encoding="utf-8", errors="ignore").split("\n")
     toc_secs, toc_parts = load_toc()
+    blue = load_blue()
+    zh2de = load_zh2de()
+    print(f"    蓝色标注 {sum(len(v) for v in blue.values())} 段 / {len(blue)} 页 | 中德映射 {len(zh2de)} 条")
+
+    # 每行所属页码（供蓝色标注按页匹配）
+    line_page: list[int] = []
+    cur_page = 1
+    for l in lines:
+        m = re.match(r"^=+\s*PAGE\s*(\d+)\s*/", l.strip())
+        if m:
+            cur_page = int(m.group(1))
+        line_page.append(cur_page)
 
     marks = []
     for i, l in enumerate(lines):
@@ -135,6 +239,7 @@ def main() -> int:
             if m:
                 w = {"zh": unspace(m.group("zh")), "en": m.group("en").strip(),
                      "ipa": m.group("ipa").strip(), "pos": m.group("pos")}
+                w["de"] = de_of(w["zh"], zh2de)
                 words.append(w)
                 for t in tokenize_ipa(w["ipa"]):
                     ipa_words[t].append(w["en"])
@@ -156,7 +261,8 @@ def main() -> int:
                 if mz:
                     if cur_s and cur_s["en"]:
                         sentences.append(cur_s)
-                    cur_s = {"zh": mz.group("zh").strip(), "en": "", "notes": []}
+                    cur_s = {"zh": mz.group("zh").strip(), "en": "", "notes": [],
+                             "page": line_page[a + 1 + i]}
                     i += 1
                     continue
                 if cur_s is not None and not cur_s["en"] and re.match(r"^[A-Za-z]", t):
@@ -178,6 +284,10 @@ def main() -> int:
             if cur_s and cur_s["en"]:
                 sentences.append(cur_s)
         if words or sentences:
+            vocab_set = {w["en"].lower() for w in words}
+            for s in sentences:
+                s["hl"] = find_hl(s["en"], s.get("page", 1), blue, vocab_set)
+                s.pop("page", None)
             scenes.append({"no": no, "zh": zh, "words": words, "sentences": sentences})
 
     # 三层组装
@@ -245,6 +355,11 @@ def main() -> int:
     print(f"    词条 {nw} | 场景句 {ns} | 句子解析 {nn}")
     print(f"    音素：元音 {len(phonetics['vowels'])} 个 · 辅音 {len(phonetics['consonants'])} 个")
     print(f"    Section 导语 {len(intros)} 条（据目录与词汇量生成）")
+    n_hl = sum(1 for s in sections for p in s["parts"] for sc in p["scenes"]
+               for x in sc["sentences"] if x.get("hl"))
+    n_de = sum(1 for s in sections for p in s["parts"] for sc in p["scenes"]
+               for w in sc["words"] if w.get("de"))
+    print(f"    蓝色强调句 {n_hl} 条 | 带德语对照的词 {n_de} 个")
     return 0
 
 
