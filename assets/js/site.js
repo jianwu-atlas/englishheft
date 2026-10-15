@@ -72,6 +72,48 @@
   const DEKEY = "englishheft_showde";
   const showDe = () => localStorage.getItem(DEKEY) === "1";
 
+  /* ---------------- 场景索引（词汇 ↔ 场景句联动的基础） ---------------- */
+  const SCENE_INDEX = {};   // scene.no -> { si, pi, sc }
+  const ALL_WORDS = [];     // { no, szh, w } 全书词条扁平表
+  if (typeof ENGLISH !== "undefined") {
+    ENGLISH.sections.forEach((s, si) => s.parts.forEach((p, pi) => p.scenes.forEach(sc => {
+      SCENE_INDEX[sc.no] = { si, pi, sc };
+      sc.words.forEach(w => ALL_WORDS.push({ no: sc.no, szh: sc.zh, w }));
+    })));
+  }
+  const sceneNoFromHash = () => {
+    const m = (location.hash || "").match(/^#sc-(\d+(?:-\d+){1,2})/);
+    return m ? m[1].replace(/-/g, ".") : null;
+  };
+  const qp = k => new URLSearchParams(location.search).get(k);
+  const escRe = s => String(s).replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+  /* 词边界高亮（不影响书本蓝色 hl）：返回 [html, 命中次数] */
+  function markWord(en, word, baseHtml) {
+    const re = new RegExp("\\b" + escRe(word) + "\\b", "gi");
+    const n = (en.match(re) || []).length;
+    if (!n) return [baseHtml, 0];
+    return [esc(en).replace(re, '<mark class="wd-hl">$&</mark>'), n];
+  }
+  /* ---------------- 场景进度（localStorage 记忆） ---------------- */
+  const DKEY = "englishheft_done";
+  const getDone = () => { try { return new Set(JSON.parse(localStorage.getItem(DKEY) || "[]")); } catch (e) { return new Set(); } };
+  const setDone = s => localStorage.setItem(DKEY, JSON.stringify([...s]));
+  const doneBtn = sc => {
+    const d = getDone().has(sc.no);
+    return `<button class="sc-done${d ? " on" : ""}" data-done="${sc.no}" title="${d ? "取消本场景「已学」标记" : "标记本场景已学"}">${d ? "✓ 已学" : "○ 标记已学"}</button>`;
+  };
+  function bindDone(app, onRedraw) {
+    $$(".sc-done", app).forEach(b => b.addEventListener("click", e => {
+      e.stopPropagation();
+      const s = getDone();
+      s.has(b.dataset.done) ? s.delete(b.dataset.done) : s.add(b.dataset.done);
+      setDone(s);
+      b.classList.toggle("on", s.has(b.dataset.done));
+      b.textContent = s.has(b.dataset.done) ? "✓ 已学" : "○ 标记已学";
+      if (onRedraw) onRedraw();
+    }));
+  }
+
   /* ---------------- 顶部工具条 ---------------- */
   function toolBar(extra) {
     return `<div class="sc-bar"><div class="sc-tools">
@@ -170,83 +212,246 @@
   }
 
   /* ---------------- 词汇 ---------------- */
-  const V_STATE = { sec: 0, part: 0 };
+  const V_STATE = { sec: 0, part: 0, q: null, ph: null, inited: false };
+  const SR_LIMIT = 200;
+  function searchWords(q, ph) {
+    const ql = String(q || "").trim().toLowerCase();
+    return ALL_WORDS.filter(it =>
+      (ph ? it.w.ipa.toLowerCase().includes(ph.toLowerCase()) : true) &&
+      (!ql || it.w.en.toLowerCase().includes(ql) || it.w.zh.includes(ql) || it.w.ipa.toLowerCase().includes(ql)));
+  }
   function renderVocab(app) {
+    if (!V_STATE.inited) { V_STATE.inited = true; V_STATE.ph = qp("ph"); }
     const { secs, nSc, nW } = stats();
+    const target = sceneNoFromHash();
+    if (target && SCENE_INDEX[target]) {
+      V_STATE.sec = SCENE_INDEX[target].si; V_STATE.part = SCENE_INDEX[target].pi;
+    }
     if (V_STATE.sec >= secs.length) V_STATE.sec = 0;
     const sec = secs[V_STATE.sec];
     if (V_STATE.part >= sec.parts.length) V_STATE.part = 0;
     const part = sec.parts[V_STATE.part];
-    app.innerHTML = `
-      <div class="chip-row sc-tabs">
-        ${secs.map((s, i) => `<button class="chip ${i === V_STATE.sec ? "on" : ""}" data-s="${i}">${s.no}. ${esc(s.zh)}<span class="sc-cnt">${s.parts.reduce((a, p) => a + p.scenes.length, 0)}</span></button>`).join("")}
-      </div>
-      ${toolBar(`<button class="chip" id="copyPart">📋 复制本 Part 纯英文</button>`)}
-      ${part.scenes.map(sc => `
-        <section class="sc-scene card">
+
+    const searching = V_STATE.q || V_STATE.ph;
+    const hits = searching ? searchWords(V_STATE.q, V_STATE.ph) : null;
+
+    let body;
+    if (searching) {
+      body = `<section class="sc-scene card sr-card">
+        <h2 class="sc-title">🔍 ${V_STATE.ph ? "音素 " + esc(V_STATE.ph) : "搜索 " + esc(V_STATE.q)}
+          <span class="sc-badge">${hits.length} / ${nW} 词${hits.length >= SR_LIMIT ? "（前 " + SR_LIMIT + "）" : ""}</span>
+          <button class="chip sr-clear">✕ 退出搜索</button></h2>
+        ${hits.slice(0, SR_LIMIT).map(it => `
+          <div class="sr-row">
+            <div class="en-word">
+              <p class="en-en"><a class="en-wordlink" href="sentences.html?w=${encodeURIComponent(it.w.en)}#sc-${it.no.replace(/\./g, "-")}" title="看本场景中所有含该词的句子">${esc(it.w.en)}<button class="s-speak" data-t="${escA(it.w.en)}" title="朗读">🔊</button></a></p>
+              <p class="s-pron">${esc(it.w.ipa)}</p>
+              <p class="en-zh">${esc(it.w.zh)}<span class="en-pos">${esc(it.w.pos)}</span></p>
+            </div>
+            <button class="sr-src" data-go="${it.no}" title="定位到该场景">${esc(it.no)} ${esc(it.szh)}</button>
+          </div>`).join("") || `<p class="sr-none">没有匹配的词条。</p>`}
+      </section>`;
+    } else {
+      body = part.scenes.map(sc => `
+        <section class="sc-scene card" data-sceneno="${sc.no}">
           <h2 class="sc-title"><span class="sc-num">${esc(sc.no.split(".").pop())}</span>${esc(sc.zh)}
-            <span class="sc-badge">${sc.words.length} 词</span></h2>
+            <span class="sc-badge">${sc.words.length} 词</span>
+            <a class="sc-xlink" href="sentences.html#sc-${sc.no.replace(/\./g, "-")}" title="看本场景的 ${sc.sentences.length} 个场景句">→ ${sc.sentences.length} 句</a>
+            ${doneBtn(sc)}</h2>
           <div class="en-words">
             ${sc.words.map(w => `
               <div class="en-word">
-                <p class="en-en">${esc(w.en)}<button class="s-speak" data-t="${escA(w.en)}" title="朗读">🔊</button></p>
+                <p class="en-en"><a class="en-wordlink" href="sentences.html?w=${encodeURIComponent(w.en)}#sc-${sc.no.replace(/\./g, "-")}" title="看本场景中所有含该词的句子">${esc(w.en)}<button class="s-speak" data-t="${escA(w.en)}" title="朗读">🔊</button></a></p>
                 <p class="s-pron">${esc(w.ipa)}</p>
                 <p class="en-zh">${esc(w.zh)}<span class="en-pos">${esc(w.pos)}</span></p>
                 ${w.de ? `<p class="en-de">🇩🇪 ${esc(w.de)}</p>` : ""}
               </div>`).join("")}
           </div>
-        </section>`).join("")}`;
+        </section>`).join("");
+    }
+
+    app.innerHTML = `
+      <div class="chip-row sc-tabs">
+        ${secs.map((s, i) => `<button class="chip ${i === V_STATE.sec ? "on" : ""}" data-s="${i}">${s.no}. ${esc(s.zh)}<span class="sc-cnt">${s.parts.reduce((a, p) => a + p.scenes.length, 0)}</span></button>`).join("")}
+      </div>
+      <div class="chip-row part-tabs">
+        ${sec.parts.map((p, i) => `<button class="chip ${!searching && i === V_STATE.part ? "on" : ""}" data-p="${i}">${esc(p.no)} ${esc(p.zh)}<span class="sc-cnt">${p.scenes.length}</span></button>`).join("")}
+      </div>
+      ${toolBar(
+        `<input class="sr-input" id="wordSearch" type="search" placeholder="🔍 搜索英文 / 中文 / 音标（全书 ${nW} 词）" value="${escA(searching ? (V_STATE.ph ? "" : V_STATE.q) : "")}" ${searching ? "" : "autofocus"}>` +
+        `<button class="chip" id="copyPart" title="把本 Part 全部词条复制为 Anki CSV（正面英文 / 反面中文+词性+音标+场景）">📥 Anki（本 Part）</button>` +
+        `<button class="chip" id="copyPartEn">📋 复制纯英文</button>`)}
+      ${body}`;
     setStat(`全书 ${nSc} 场景 · ${nW} 词`);
+
     $$(".sc-tabs .chip", app).forEach(b => b.addEventListener("click", () => {
-      V_STATE.sec = +b.dataset.s; V_STATE.part = 0; renderVocab(app);
+      V_STATE.sec = +b.dataset.s; V_STATE.part = 0; V_STATE.q = null; V_STATE.ph = null;
+      history.replaceState(null, "", location.pathname);
+      renderVocab(app);
       window.scrollTo({ top: 0, behavior: "smooth" });
     }));
-    copyBtn("#copyPart", "", () => part.scenes.map(sc =>
-      `【${sc.zh}】\n` + sc.words.map(w => w.en).join("\n")).join("\n\n"));
+    $$(".part-tabs .chip", app).forEach(b => b.addEventListener("click", () => {
+      V_STATE.part = +b.dataset.p; V_STATE.q = null; V_STATE.ph = null;
+      history.replaceState(null, "", location.pathname);
+      renderVocab(app);
+      window.scrollTo({ top: 0, behavior: "smooth" });
+    }));
+
+    const si = $("#wordSearch", app);
+    let tmr = null;
+    if (si) si.addEventListener("input", () => {
+      clearTimeout(tmr);
+      tmr = setTimeout(() => {
+        const v = si.value.trim();
+        if (!v && !V_STATE.ph) { V_STATE.q = null; V_STATE.ph = null; history.replaceState(null, "", location.pathname); renderVocab(app); return; }
+        V_STATE.q = v || null; V_STATE.ph = v ? null : V_STATE.ph;
+        renderVocab(app);
+        const ni = $("#wordSearch", app);
+        if (ni) { ni.focus(); ni.setSelectionRange(ni.value.length, ni.value.length); }
+      }, 140);
+    });
+    const clr = $(".sr-clear", app);
+    if (clr) clr.addEventListener("click", () => {
+      V_STATE.q = null; V_STATE.ph = null;
+      history.replaceState(null, "", location.pathname);
+      renderVocab(app);
+    });
+    $$(".sr-src", app).forEach(b => b.addEventListener("click", () => {
+      const it = SCENE_INDEX[b.dataset.go];
+      if (!it) return;
+      V_STATE.sec = it.si; V_STATE.part = it.pi; V_STATE.q = null; V_STATE.ph = null;
+      history.replaceState(null, "", location.pathname + "#sc-" + b.dataset.go.replace(/\./g, "-"));
+      renderVocab(app);
+      flashScene(app);
+    }));
+
+    /* Anki 导出（本 Part，带场景号） */
+    const cp = $("#copyPart", app);
+    if (cp) {
+      cp.addEventListener("click", () => {
+        const rows = [];
+        part.scenes.forEach(sc => sc.words.forEach(w => {
+          rows.push(`"${w.en.replace(/"/g, '""')}","${(w.zh + " " + w.pos + " [" + w.ipa + "] · " + sc.no + " " + sc.zh).replace(/"/g, '""')}"`);
+        }));
+        const txt = rows.join("\n");
+        const done = () => { const o = cp.textContent; cp.textContent = `✓ 已复制 ${rows.length} 词`; setTimeout(() => { cp.textContent = o; }, 1800); };
+        if (navigator.clipboard) navigator.clipboard.writeText(txt).then(done).catch(done);
+        else { const ta = document.createElement("textarea"); ta.value = txt; document.body.appendChild(ta); ta.select(); try { document.execCommand("copy"); } catch (err) {} ta.remove(); done(); }
+      });
+    }
+    copyBtn("#copyPartEn", "", () => part.scenes.map(sc =>
+      `【${sc.no} ${sc.zh}】\n` + sc.words.map(w => w.en).join("\n")).join("\n\n"));
+    bindDone(app, () => {});
     bindTools(app, () => renderVocab(app));
+    if (!searching) flashScene(app);
+  }
+  let _lastFlash = null;
+  function flashScene(app) {
+    const no = sceneNoFromHash();
+    if (!no || no === _lastFlash) return;
+    _lastFlash = no;
+    const el = $(`[data-sceneno="${no}"]`, app);
+    if (!el) return;
+    el.scrollIntoView({ behavior: "smooth", block: "start" });
+    el.classList.add("flash");
+    setTimeout(() => el.classList.remove("flash"), 2200);
   }
 
   /* ---------------- 场景句 ---------------- */
-  const S_STATE = { sec: 0, part: 0, onlyNotes: false };
+  const S_STATE = { sec: 0, part: 0, onlyNotes: false, w: null };
   function renderSentences(app) {
     const { secs, nS, nN } = stats();
+    const target = sceneNoFromHash();
+    if (target && SCENE_INDEX[target]) {
+      S_STATE.sec = SCENE_INDEX[target].si; S_STATE.part = SCENE_INDEX[target].pi;
+    }
     if (S_STATE.sec >= secs.length) S_STATE.sec = 0;
     const sec = secs[S_STATE.sec];
     if (S_STATE.part >= sec.parts.length) S_STATE.part = 0;
     const part = sec.parts[S_STATE.part];
-    const blocks = part.scenes.map(sc => ({
-      sc, sents: S_STATE.onlyNotes ? sc.sentences.filter(x => x.notes.length) : sc.sentences,
-    })).filter(b => b.sents.length);
+    S_STATE.w = qp("w");
+    const tSc = target ? SCENE_INDEX[target] : null;
+    let hitCount = 0;
+    if (tSc && S_STATE.w) {
+      const re = new RegExp("\\b" + escRe(S_STATE.w) + "\\b", "gi");
+      hitCount = tSc.sc.sentences.filter(s => (s.en.match(re) || []).length).length;
+    }
+
+    const blocks = part.scenes.map(sc => {
+      const isT = tSc && tSc.sc.no === sc.no && S_STATE.w;
+      const sents = S_STATE.onlyNotes ? sc.sentences.filter(x => x.notes.length) : sc.sentences;
+      return { sc, sents, isT };
+    }).filter(b => b.sents.length);
+
+    const banner = (tSc && S_STATE.w) ? `
+      <div class="wd-banner">
+        📎 单词「<b>${esc(S_STATE.w)}</b>」在本场景 ${esc(tSc.sc.zh)} 的 ${tSc.sc.sentences.length} 句中命中
+        <b>${hitCount}</b> 句${hitCount === 0 ? "（本场景句子未出现该词）" : ""}
+        <button class="wd-clear" id="wdClear">✕ 清除高亮</button>
+      </div>` : "";
+
     app.innerHTML = `
       <div class="chip-row sc-tabs">
         ${secs.map((s, i) => `<button class="chip ${i === S_STATE.sec ? "on" : ""}" data-s="${i}">${s.no}. ${esc(s.zh)}<span class="sc-cnt">${s.parts.reduce((a, p) => a + p.scenes.reduce((c, x) => c + x.sentences.length, 0), 0)}</span></button>`).join("")}
       </div>
+      <div class="chip-row part-tabs">
+        ${sec.parts.map((p, i) => `<button class="chip ${i === S_STATE.part ? "on" : ""}" data-p="${i}">${esc(p.no)} ${esc(p.zh)}<span class="sc-cnt">${p.scenes.reduce((a, x) => a + x.sentences.length, 0)}</span></button>`).join("")}
+      </div>
       ${toolBar(`<button class="chip ${S_STATE.onlyNotes ? "on" : ""}" id="onlyNotes">🔎 只看有解析</button><button class="chip" id="copyPart">📋 复制本 Part 纯英文</button>`)}
-      ${blocks.map(({ sc, sents }) => `
-        <section class="sc-scene card">
+      ${banner}
+      ${blocks.map(({ sc, sents, isT }) => `
+        <section class="sc-scene card" data-sceneno="${sc.no}">
           <h2 class="sc-title"><span class="sc-num">${esc(sc.no.split(".").pop())}</span>${esc(sc.zh)}
-            <span class="sc-badge">${sents.length} 句</span></h2>
-          ${sents.map(s => `
+            <span class="sc-badge">${sents.length} 句</span>
+            <a class="sc-xlink" href="vocab.html#sc-${sc.no.replace(/\./g, "-")}" title="看本场景的 ${sc.words.length} 个词条">→ ${sc.words.length} 词</a>
+            ${doneBtn(sc)}</h2>
+          ${sents.map(s => {
+            let html;
+            if (isT) {
+              const base = hlText(s.en, s.hl);
+              const r = markWord(s.en, S_STATE.w, base);
+              html = r[0];
+              if (r[1]) hitCount += 1;
+            } else {
+              html = hlText(s.en, s.hl);
+            }
+            return `
             <div class="sc-turn">
               <span class="sc-spk">·</span>
               <div class="sc-turn-body">
-                <p class="s-de">${hlText(s.en, s.hl)}<button class="s-speak" data-t="${escA(s.en)}" title="朗读">🔊</button></p>
+                <p class="s-de">${html}<button class="s-speak" data-t="${escA(s.en)}" title="朗读">🔊</button></p>
                 <p class="s-zh">${esc(s.zh)}</p>
                 ${s.notes.length ? `<div class="en-notes">${s.notes.map(n =>
                   `<p class="en-note-line"><b class="en-note-k">${esc(n.k)}</b>${esc(n.t)}</p>`).join("")}</div>` : ""}
               </div>
-            </div>`).join("")}
+            </div>`;
+          }).join("")}
         </section>`).join("") || `<div class="card"><p>本 Part 暂无带解析的句子。</p></div>`}`;
     setStat(`全书 ${nS} 句 · ${nN} 条解析`);
     $$(".sc-tabs .chip", app).forEach(b => b.addEventListener("click", () => {
-      S_STATE.sec = +b.dataset.s; S_STATE.part = 0; renderSentences(app);
+      S_STATE.sec = +b.dataset.s; S_STATE.part = 0;
+      history.replaceState(null, "", location.pathname + location.hash);
+      renderSentences(app);
+      window.scrollTo({ top: 0, behavior: "smooth" });
+    }));
+    $$(".part-tabs .chip", app).forEach(b => b.addEventListener("click", () => {
+      S_STATE.part = +b.dataset.p;
+      history.replaceState(null, "", location.pathname + location.hash);
+      renderSentences(app);
       window.scrollTo({ top: 0, behavior: "smooth" });
     }));
     const on = $("#onlyNotes", app);
     if (on) on.addEventListener("click", () => { S_STATE.onlyNotes = !S_STATE.onlyNotes; renderSentences(app); });
+    const wc = $("#wdClear", app);
+    if (wc) wc.addEventListener("click", () => {
+      history.replaceState(null, "", location.pathname + location.hash);
+      renderSentences(app);
+    });
     copyBtn("#copyPart", "", () => part.scenes.map(sc =>
-      `【${sc.zh}】\n` + sc.sentences.map(x => x.en).join("\n")).join("\n\n"));
+      `【${sc.no} ${sc.zh}】\n` + sc.sentences.map(x => x.en).join("\n")).join("\n\n"));
+    bindDone(app, () => {});
     bindTools(app, () => renderSentences(app));
+    if (target) flashScene(app);
   }
 
   /* ---------------- 语音·音标 ---------------- */
@@ -256,7 +461,7 @@
       <table class="sc-md-table ph-table ${cls}">
         <thead><tr><th>音标</th><th>说明</th><th>书中例词</th><th>出现</th></tr></thead>
         <tbody>${rows.map(r => `
-          <tr>
+          <tr class="ph-row" data-ph="${escA(r.ipa)}" title="点击在词汇页反查本书转写含 /${esc(r.ipa)}/ 的词">
             <td><span class="ph-ipa">/${esc(r.ipa)}/</span><button class="s-speak" data-t="${escA(r.examples[0] || "")}" title="朗读例词">🔊</button></td>
             <td>${esc(r.zh)}</td>
             <td>${r.examples.map(e => esc(e)).join(" · ")}</td>
@@ -269,6 +474,7 @@
         <h3>🔤 英语音素表</h3>
         <p>下表<b>从全书 ${stats().nW} 条词条的音标反推</b>：统计每个音素在书中的出现次数，并取出现最多的词作例词。
         因此例词都出自本书语境，便于对照记忆。</p>
+        <p>💡 <b>点任意一行</b> → 词汇页反查「本书转写含该音素的所有词」。</p>
         <p class="en-note-src">注：原书音标混用英式/美式写法（如 <code>ei</code> 与 <code>eɪ</code>、<code>ai</code> 与 <code>aɪ</code> 并存），此处按原书写法分别统计。</p>
       </div>
       <section class="sc-scene card">
@@ -280,31 +486,49 @@
         ${tbl(ph.consonants, "ph-cons")}
       </section>`;
     setStat(`元音 ${ph.vowels.length} · 辅音 ${ph.consonants.length}`);
+    $$(".ph-row", app).forEach(tr => tr.addEventListener("click", e => {
+      if (e.target.closest("button")) return;
+      location.href = "vocab.html?ph=" + encodeURIComponent(tr.dataset.ph);
+    }));
     bindTools(app);
   }
 
   /* ---------------- 大类导览 ---------------- */
   function renderSections(app) {
-    const { secs } = stats();
+    const { secs, nSc } = stats();
+    const done = getDone();
+    const totalDone = done.size;
+    const secProg = s => {
+      let tot = 0, dn = 0;
+      s.parts.forEach(p => p.scenes.forEach(sc => { tot++; if (done.has(sc.no)) dn++; }));
+      return { tot, dn };
+    };
     app.innerHTML = `
       ${toolBar()}
+      <div class="prog-card card">
+        <div class="prog-head">🗸 学习进度 <b>${totalDone}</b> / ${nSc} 场景（在词汇 / 场景句页的场景卡上点「标记已学」）</div>
+        <div class="prog"><i style="width:${nSc ? (totalDone / nSc * 100) : 0}%"></i></div>
+      </div>
       ${ENGLISH.intros.map(it => {
         const s = secs.find(x => x.no === it.no);
+        const pg = secProg(s);
         return `
         <section class="sc-scene card">
           <h2 class="sc-title"><span class="sc-num">${it.no}</span>${esc(it.zh)}
-            <span class="sc-badge">${s.parts.length} Part · ${s.parts.reduce((a, p) => a + p.scenes.length, 0)} 场景</span></h2>
+            <span class="sc-badge">${s.parts.length} Part · ${pg.tot} 场景</span>
+            <span class="sc-badge prog-badge">${pg.dn}/${pg.tot} ✓</span></h2>
+          <div class="prog prog-sm"><i style="width:${pg.tot ? (pg.dn / pg.tot * 100) : 0}%"></i></div>
           <p class="en-intro">${esc(it.text)}</p>
           <div class="en-parts">
             ${s.parts.map(p => `
               <div class="en-part">
                 <div class="en-part-h">${esc(p.zh)}<span class="en-part-n">${p.scenes.length} 场景</span></div>
-                <div class="en-scene-chips">${p.scenes.map(sc => `<span class="en-scene-chip">${esc(sc.zh)}</span>`).join("")}</div>
+                <div class="en-scene-chips">${p.scenes.map(sc => `<span class="en-scene-chip${done.has(sc.no) ? " done" : ""}">${done.has(sc.no) ? "✓ " : ""}${esc(sc.zh)}</span>`).join("")}</div>
               </div>`).join("")}
           </div>
         </section>`;
       }).join("")}`;
-    setStat(`${secs.length} 个大类`);
+    setStat(`${secs.length} 个大类 · 已完成 ${totalDone}/${nSc} 场景`);
     bindTools(app);
   }
 

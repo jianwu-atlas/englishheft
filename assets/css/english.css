@@ -1384,3 +1384,75 @@ ruby.ipa:hover rt { color: var(--accent); }
   #ipaToggle { right: 14px; bottom: 14px; padding: 9px 13px; font-size: 12px; }
   ruby.ipa rt { font-size: .55em; }
 }
+
+/* ============================================================
+   词汇 ↔ 场景句联动 / 全局搜索 / 进度 / 音素反查 / Anki
+   （配色沿用 logo 双色系：焦橙 var(--accent) + 青绿 #00CCCC）
+   ============================================================ */
+/* Part 二级页签 */
+.part-tabs { margin: 0 0 4px; }
+.part-tabs .chip { font-size: 12px; padding: 5px 10px; }
+.part-tabs .chip .sc-cnt { margin-left: 5px; opacity: .6; font-size: 10.5px; }
+
+/* 场景卡：跨页联动链接 + 「标记已学」 */
+.sc-title { flex-wrap: wrap; row-gap: 6px; }
+.sc-xlink { font-size: 11.5px; font-weight: 600; color: var(--accent); text-decoration: none;
+  padding: 3px 10px; border: 1px solid var(--line); border-radius: 99px; white-space: nowrap; }
+.sc-xlink:hover { background: var(--accent-soft); }
+.sc-done { font-size: 11.5px; padding: 3px 10px; border-radius: 99px; border: 1px solid var(--line);
+  background: transparent; color: var(--ink-3); cursor: pointer; white-space: nowrap; font-family: inherit; }
+.sc-done:hover { border-color: var(--gold); color: var(--ink-2); }
+.sc-done.on { background: var(--ok); border-color: var(--ok); color: #fff; }
+
+/* hash 定位闪烁 */
+.sc-scene.flash { outline: 3px solid var(--gold); outline-offset: 2px; transition: outline-color .5s; }
+
+/* 词条英文可点（→ 场景句页高亮） */
+.en-wordlink { color: inherit; text-decoration: none; }
+.en-wordlink:hover { text-decoration: underline dotted; text-underline-offset: 3px; }
+
+/* 单词命中高亮（青绿，与书本蓝 en-hl 区分） */
+:root { --wd-teal: #008f8f; --wd-teal-soft: rgba(0,204,204,.2); }
+[data-theme="dark"] { --wd-teal: #35d6c9; --wd-teal-soft: rgba(0,204,204,.22); }
+mark.wd-hl { background: var(--wd-teal-soft); color: var(--wd-teal); border-radius: 3px;
+  padding: 0 2px; font-weight: 700; box-shadow: inset 0 -2px 0 rgba(0,204,204,.5); }
+
+/* 单词联动提示条 */
+.wd-banner { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; margin: 0 0 16px;
+  padding: 10px 14px; border-radius: 12px; background: rgba(0,204,204,.1);
+  border: 1px solid rgba(0,204,204,.4); font-size: 13px; color: var(--ink); }
+.wd-banner b { color: var(--wd-teal); }
+.wd-clear { margin-left: auto; font-size: 11.5px; padding: 3px 10px; border-radius: 99px;
+  border: 1px solid rgba(0,204,204,.5); background: transparent; color: var(--wd-teal);
+  cursor: pointer; font-family: inherit; }
+
+/* 全局搜索 */
+.sr-input { flex: 0 1 330px; min-width: 190px; padding: 7px 14px; border-radius: 99px;
+  border: 1px solid var(--line); background: var(--paper-2); font-family: inherit;
+  font-size: 13px; color: var(--ink); }
+.sr-input:focus { outline: none; border-color: var(--accent); box-shadow: 0 0 0 3px var(--accent-soft); }
+.sr-clear { font-size: 11.5px; padding: 3px 10px; border-radius: 99px; border: 1px solid var(--line);
+  background: transparent; color: var(--ink-3); cursor: pointer; margin-left: 8px; font-family: inherit; }
+.sr-clear:hover { border-color: var(--bad); color: var(--bad); }
+.sr-row { display: flex; align-items: flex-start; gap: 14px; padding: 10px 0; border-bottom: 1px dashed var(--line); }
+.sr-row .en-word { border-bottom: 0; flex: 1 1 auto; min-width: 0; }
+.sr-src { flex: 0 0 auto; margin-top: 5px; font-size: 11.5px; padding: 4px 10px; border-radius: 99px;
+  border: 1px solid var(--line); background: transparent; color: var(--ink-3);
+  cursor: pointer; white-space: nowrap; font-family: inherit; }
+.sr-src:hover { border-color: var(--accent); color: var(--accent); }
+.sr-none { color: var(--ink-3); font-size: 13px; padding: 12px 0; }
+
+/* 音素行可点（→ 词汇页反查） */
+.ph-row { cursor: pointer; transition: background .12s; }
+.ph-row:hover { background: var(--accent-soft); }
+[data-theme="dark"] .ph-row:hover { background: rgba(255,255,255,.06); }
+
+/* 学习进度 */
+.prog { height: 8px; border-radius: 99px; background: var(--line-soft, #eae1cd); overflow: hidden; margin: 8px 0 4px; }
+.prog i { display: block; height: 100%; border-radius: 99px; background: linear-gradient(90deg, #00cccc, var(--ok)); }
+.prog-sm { height: 6px; margin: 0 0 12px; }
+.prog-card { padding: 14px 18px; margin-bottom: 18px; }
+.prog-head { font-size: 13.5px; color: var(--ink-2); }
+.prog-head b { color: var(--accent); }
+.prog-badge { color: var(--ok); font-weight: 700; }
+.en-scene-chip.done { background: var(--ok); border-color: var(--ok); color: #fff; }
