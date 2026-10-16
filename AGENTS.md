@@ -34,11 +34,13 @@
 | `scripts/gen_logos.py` | Logo SVG → PNG 栅格化（Playwright Chromium）：favicon-16/32/48、apple-touch-icon、icon-192/512/512-maskable、logo-mark、og-image |
 | `scripts/_check_logo.py` | Logo 本地验证（7 项断言：SVG 内容 / 引用版本号 / 导航 mark 渲染） |
 | `assets/js/data/english.js` | 脚本生成，**勿手改**（1059 KB） |
-| `assets/js/data/en-de.js` | **德文对照数据**，由 `build_en_de.py` 生成，**勿手改**。`const EN_DE = { "场景号:句idx": {de, ipa:[…]} }`；`ipa[]` 与 `de.split(/\s+/)` 逐词对齐，空串=未映射 IPA。当前**全部 17 大类（4941 句，69% 逐词 IPA）** |
+| `assets/js/data/en-de.js` | **德文对照数据**，由 `build_en_de.py` 生成，**勿手改**。`const EN_DE = { "场景号:句idx": {de, ipa:[…]} }`；`ipa[]` 与 `de.split(/\s+/)` 逐词对齐，空串=未映射 IPA。当前**全部 17 大类（4941 句，99.9% 逐词 IPA；仅纯数字留空）** |
 | `data/de_translations.json` | **英→德翻译**（4941 句 = 全书场景句，LLM 生成），key=`场景号:句idx`；`build_en_de.py` 输入源之一。各 Section 的中间产物 `tr_secN.json`/`work_secN.json` **不入库**（仅留合并后的本文件） |
 | `data/de_ipa_dict.json` | **德语词→IPA 字典**（1249 词，快照自德语站 `pron.js`+`wortliste.js`，已剔除 word==ipa 回退项）；`build_en_de.py` 权威输入源 |
 | `data/de_ipa_supplement.json` | **高频功能词/变位 IPA 补全**（50 词：das/an/am/so/als/da/mal/diese + 常见变位 hast/wird/wurde/kannst 等）；填补快照缺口，**base 优先**（冲突保留快照值）；`build_en_de.py` 可选输入源 |
-| `scripts/build_en_de.py` | 读 `data/`（translations + ipa_dict + ipa_supplement）→ 键归一化（小写/ß→ss，base 优先合并）→ 分词逐词查 IPA → 生成 `en-de.js`。当前 **IPA 词覆盖 69%**（全书 4941 句；无形态词干还原，属预期基线）。输出统一「裸 IPA」风格（剥 w6000/espeak 首尾 `[]`），头部句数随数据动态。**每补一批 Section 到 `de_translations.json` 后重跑即可** |
+| `data/de_ipa_espeak.json` | **第三层兜底词典**：base/supp 都未命中的**屈折/派生词**（5374 词）espeak-ng 近似 IPA，键=stem 口径、值带 `[..]`。由 `build_en_ipa_espeak.py` 生成，**勿手改** |
+| `scripts/build_en_ipa_espeak.py` | 复用 `build_en_de.stem()` 算出未命中 distinct 词 → 过滤纯数字/无字母 → 批量 `espeak-ng -v de --ipa`（线程 + 断点续跑 `data/en_ipa_espeak_progress.json`）→ 写 `data/de_ipa_espeak.json`（**纯 JSON**）。`--dry` 只统计不调 espeak。⚠️ espeak 每次 ~1s，全量 ~12min，**后台跑** |
+| `scripts/build_en_de.py` | 读 `data/`（translations + ipa_dict + ipa_supplement + **ipa_espeak**）→ 键归一化（小写/ß→ss）→ 分词逐词查 IPA → 生成 `en-de.js`。**三层查表 base → supplement → espeak**（冲突保留高层）。当前 **IPA 词覆盖 99.9%**（全书 4941 句；仅纯数字留空）。输出统一「裸 IPA」风格（剥首尾 `[]`），头部句数随数据动态。**每补一批翻译/词表后重跑即可**（若新增屈折词先跑 `build_en_ipa_espeak.py` 再跑本脚本） |
 | `scripts/_extract_work.js` | 抽取某 Section 的「英文/中文对照待译清单」→ `data/work_secN.json`（`{key,en,zh}`）；用法 `node scripts/_extract_work.js data/work_secN.json 13 14 15`（section 号为字符串） |
 | `scripts/_test_en_de.py` | 德文对照 Playwright 测试（默认隐藏 / 开关显形 / 逐词 IPA / de-DE 朗读函数 / Section 2 **已有数据**应渲染 / **无 JS 错误**；**需 anaconda 解释器**：`/Users/Jack/opt/anaconda3/bin/python3 scripts/_test_en_de.py`） |
 
@@ -83,6 +85,13 @@
 
 ## 更新记录
 
+- 2026-10-16（**A1 · 德文逐词 IPA espeak 兜底补全，69%→99.9%**，commit `f72ef80`）：
+  - **根因**：缺口几乎全是**屈折/派生形式**（变位 geht/wurde、复数 Tauben、过去分词 gegangen…）——词典只收词干/原形，命中不了变体。
+  - **做法（Jian 拍板「espeak 近似兜底」）**：新增 `scripts/build_en_ipa_espeak.py`（复用 `build_en_de.stem()` 口径）对 base/supp 都未命中的 **5374 个 distinct 词**批量 `espeak-ng -v de --ipa` → `data/de_ipa_espeak.json`（纯 JSON，过滤纯数字 23 个，断点续跑 ~12min 后台）；`build_en_de.py` 查表升级为**三层 base→supplement→espeak**（冲突保留高层，复用既有剥 `[]` 逻辑）。
+  - **产物**：`en-de.js` 重建，tokens **31045/31073 命中（69%→99.9%）**，0 方括号污染；屈折词现已有 IPA（geritten→ɡərˈɪtən / Tauben→tˈaʊbən / mitzunehmen→mˈɪttsuːnˌeːmən）。
+  - **版本**：`en-de.js ?v=2→v3`（仅 `sentences.html` 载入），regen + 打包 dist（8.59MB）。
+  - **验证**：`_test_en_de.py`（`.deu-ipa=332` 全有 IPA，此前 273/332 / Sec2 180 行 / 0 JS 错误）。
+  - **部署**：GitHub Pages（push 即发）+ Cloudflare（`englishheft.pages.dev`）均 curl 实测 `?v=3` 上线；EdgeOne 依规则跳过。
 - 2026-10-16（**场景句德文对照铺开至全部 17 大类（4941 句）**，commit `0f61c7d`）：
   - **背景**：试点 Section 1（179 句，`68cbe6b`）Jian 复核满意后拍板「继续全部译完并部署」，本条即终局落地。
   - **翻译管线（逐波）**：`_extract_work.js` 抽待译清单 → 按**英文原句**英→德 LLM 译（中/英冲突以英文为准，A1-A2 自然口语）→ 写 `data/tr_secN.json` → 校验（unique / 无空 / 与 work 1:1 / 与已有 0 冲突）→ 合并进 `data/de_translations.json` → 重跑 `build_en_de.py`。波次：sec13-15（730）→ sec16-17（429）。
