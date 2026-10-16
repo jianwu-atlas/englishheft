@@ -18,7 +18,7 @@
 | `phonetics.html` | **语音·音标**：**51 个音素**（25 元音 + 26 辅音）表，每音素配**书中例词** + 出现次数；**点行音素反查**（→`vocab.html?ph=…`） |
 | `sections.html` | **大类导览**：17 个 Section 的构成（Part / 场景清单）与学习建议；**学习进度**（总进度条 + 大类徽章 + 场景 chip ✓） |
 | `pdf.html` | **原文 PDF**：在线翻阅《15000英语单词口袋书》原版（`<iframe>` 阅读器，镜像德语站 `lbk-viewer`）+ 下载按钮。**独立壳手工维护**（无 `#app`，仅载 site.js 走 initTheme + initBurger + 内联 toggle）；`assets/15000-en-words.pdf`（6.5 MB / 1370 页） |
-| `assets/js/site.js` | 交互核心：页面分发、**en-US + de-DE 朗读**（语速三档共用）、隐藏中文自测、复制纯英文、**词汇↔场景句联动（hash `#sc-x-y-z` + `?w=` + `?ph=`）**、搜索 / 进度 / Anki 导出、**🇩🇪 德文对照渲染**（`gerHtml` 逐词 IPA + `speakDe`）、**移动端 ☰ 汉堡导航**（`initBurger`，小屏 6 链接折叠为汉堡下拉） |
+| `assets/js/site.js` | 交互核心：页面分发、**en-US + de-DE 朗读**（语速三档共用）、隐藏中文自测、复制纯英文、**词汇↔场景句联动（hash `#sc-x-y-z` + `?w=` + `?ph=`）**、搜索 / 进度 / Anki 导出、**🇩🇪 德文对照渲染**（`gerHtml` 逐词 IPA + `speakDe`）、**整段场景连读**（`speakScene` 链式朗读全场景，随🇩🇪开关读英/德，会话 id 防串读，Esc/再点/切Section 停止）、**移动端 ☰ 汉堡导航**（`initBurger`，小屏 6 链接折叠为汉堡下拉） |
 | `assets/js/offline.js` | PWA：注册 SW + 「📥 离线缓存」按钮 + iOS 添加到主屏幕提示 |
 | `sw.js` / `manifest.webmanifest` | Service Worker（缓存优先 + 导航回退）与 PWA 清单 |
 | `assets/css/english.css` | 设计系统（复制自德语站 `deutsch.css`）+ 英语站专属样式 |
@@ -84,6 +84,15 @@
 - 仓库：https://github.com/jianwu-atlas/englishheft （描述用中文）
 
 ## 更新记录
+
+- 2026-10-16（**A2 · 整段场景连读**，commit `f9c1d9d`）：
+  - **需求**：Jian 选「A·学习效果提升」后拍板落地 A1/A2/A3。A2 = 场景句页每个场景标题加「▶ 连读」按钮，**链式** `speechSynthesis` 顺序朗读**整场景全部句子**（不受「只看有解析」过滤影响），读完自动停止。
+  - **实现**（`assets/js/site.js`）：`speakScene(sc, useDe, btn)` 逐句组 `items`（`useDe` 且有 `EN_DE` 时取德文 `EN_DE[sc.no:idx].de`，否则英文 `s.en`），`step()` 里 `u.onend=step / u.onerror=step` 串下一句，末句 `i>=items.length` → `stopSceneSpeak()`；**会话 id**（`sceneSeq` 自增 + `my` 快照）防「新会话取代 / Esc 停止后旧 onend 误续」；`stopSceneSpeak()` 取消语音 + 复位按钮文案；`activeSceneBtn` 记录当前连读按钮切「⏹ 停止」。语言 `useDe?"de-DE":"en-US"`、音色 `deVoice`/`voice`、语速 `curSpeed().r`（三档与单句共用）。
+  - **入口**：场景 `<h2 class="sc-title">` 加 `<button class="s-speak-scene" data-sceneno>`；点击绑定 `speakScene(sc, showDe(), b)`（**随既有「🇩🇪 德语对照」开关**读英/德），再点同按钮或按 **Esc** 停止；`renderSentences` 每次 `app.innerHTML=` 前调 `stopSceneSpeak()`（切 Section/Part/状态即停）。
+  - **样式**（`assets/css/english.css`）：`.s-speak-scene` 胶囊按钮（accent 边框 + `--accent-soft` 底 + accent 字，hover 反白），贴 `.sc-done` 后。
+  - **版本**：`site.js v6→v7`、`english.css v9→v10`（`gen_pages.py` + `pdf.html` 手工同步，共 6 页）。
+  - **验证**：`scripts/_test_en_de.py` 加 A2 断言（`.s-speak-scene` 按钮存在 / `__enSpeakScene`+`__enStopScene` 函数暴露 / 点击切「⏹ 停止」/ 显式停止复位「▶ 连读」/ 连读过程 0 console error，headless 无音频文案断言从宽）+ `_test_en_links.py` 回归 **全绿（0 JS 错误）**；`node --check site.js` 通过（**坑**：初版 `speakScene` 首行误多一个 `"`（`window"))`）致语法错误，byte-diff 定位后修）。
+  - **部署**：GitHub Pages（push 即发）+ Cloudflare（`englishheft.pages.dev`，wrangler 26 文件）均 curl 实测 `?v=7` + 线上 `site.js` 含 A2 函数（11 处）；EdgeOne 依规则跳过。
 
 - 2026-10-16（**A1 · 德文逐词 IPA espeak 兜底补全，69%→99.9%**，commit `f72ef80`）：
   - **根因**：缺口几乎全是**屈折/派生形式**（变位 geht/wurde、复数 Tauben、过去分词 gegangen…）——词典只收词干/原形，命中不了变体。
