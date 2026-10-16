@@ -12,24 +12,26 @@
 
 | 路径 | 用途 |
 |---|---|
-| `index.html` | 首页：总量统计 + **5 张入口卡**（含原文 PDF）+ 来源说明 |
+| `index.html` | 首页：总量统计 + **6 张入口卡**（**复习队列**（今日到期 N 场景）+ 词汇 / 场景句 / 语音 / 大类导览 / 原文 PDF）+ 来源说明 |
 | `vocab.html` | **词汇**：17 大类 → **Part 二级导航** → 场景，493 场景 / 7052 词条，三行格式 + 逐条 🔊；**全局搜索**（EN/中文/音标）、**单词联动链接**（→场景句）、**Anki 导出**（本 Part）、**进度打勾** |
 | `sentences.html` | **场景句**：4941 句（英文/中文）+ **1272 条句子解析**（● 短语用法 / ★ 单词说明 / ■ 句型搭配）；可「只看有解析」；**单词联动**（`?w=词` 横幅 + 青绿高亮）、**场景互跳**、**进度打勾**、**🇩🇪 德文对照**（逐词 IPA + de-DE 朗读，**全部 17 大类 / 4941 句**） |
 | `phonetics.html` | **语音·音标**：**51 个音素**（25 元音 + 26 辅音）表，每音素配**书中例词** + 出现次数；**点行音素反查**（→`vocab.html?ph=…`） |
-| `sections.html` | **大类导览**：17 个 Section 的构成（Part / 场景清单）与学习建议；**学习进度**（总进度条 + 大类徽章 + 场景 chip ✓） |
+| `sections.html` | **大类导览**：17 个 Section 的构成（Part / 场景清单）与学习建议；**学习进度**（总进度条 + 大类徽章 + 场景 chip ✓）+ **📅 复习队列入口**（今日到期 N 场景 →） |
+| `review.html` | **复习（Leitner SRS）**：今日到期的「已学」场景逐卡展示（盒位徽章 + 词条 + 场景句 + 🔊/🇩🇪），自评「✅ 记住了·升盒 / ❌ 又忘了·回盒 1」。数据 `localStorage englishheft_srs`，五盒间隔 1/2/4/7/15 天；「标记已学」自动入盒 1，取消移出队列 |
 | `pdf.html` | **原文 PDF**：在线翻阅《15000英语单词口袋书》原版（`<iframe>` 阅读器，镜像德语站 `lbk-viewer`）+ 下载按钮。**独立壳手工维护**（无 `#app`，仅载 site.js 走 initTheme + initBurger + 内联 toggle）；`assets/15000-en-words.pdf`（6.5 MB / 1370 页） |
-| `assets/js/site.js` | 交互核心：页面分发、**en-US + de-DE 朗读**（语速三档共用）、隐藏中文自测、复制纯英文、**词汇↔场景句联动（hash `#sc-x-y-z` + `?w=` + `?ph=`）**、搜索 / 进度 / Anki 导出、**🇩🇪 德文对照渲染**（`gerHtml` 逐词 IPA + `speakDe`）、**整段场景连读**（`speakScene` 链式朗读全场景，随🇩🇪开关读英/德，会话 id 防串读，Esc/再点/切Section 停止）、**移动端 ☰ 汉堡导航**（`initBurger`，小屏 6 链接折叠为汉堡下拉） |
+| `assets/js/site.js` | 交互核心：页面分发、**en-US + de-DE 朗读**（语速三档共用）、隐藏中文自测、复制纯英文、**词汇↔场景句联动（hash `#sc-x-y-z` + `?w=` + `?ph=`）**、搜索 / 进度 / Anki 导出、**🇩🇪 德文对照渲染**（`gerHtml` 逐词 IPA + `speakDe`）、**整段场景连读**（`speakScene` 链式朗读全场景，随🇩🇪开关读英/德，会话 id 防串读，Esc/再点/切Section 停止）、**A3 场景级 Leitner SRS**（`srsEnroll/Advance/Reset/Drop/Due` + `srsMigrate` 一次性迁移 + `renderReview` 复习队列；done 打勾联动入/出队列，`localStorage englishheft_srs`）、**移动端 ☰ 汉堡导航**（`initBurger`，小屏 7 链接折叠为汉堡下拉） |
 | `assets/js/offline.js` | PWA：注册 SW + 「📥 离线缓存」按钮 + iOS 添加到主屏幕提示 |
 | `sw.js` / `manifest.webmanifest` | Service Worker（缓存优先 + 导航回退）与 PWA 清单 |
 | `assets/css/english.css` | 设计系统（复制自德语站 `deutsch.css`）+ 英语站专属样式 |
 | `scripts/build_en_site.py` | **蒸馏脚本**：PDF 文本层 → `assets/js/data/english.js` |
-| `scripts/gen_pages.py` | 生成 5 个页面（同壳不同内容，改导航/文案改这里；NAV 含「原文」→ `pdf.html`，该页本身**手工维护**不进生成） |
+| `scripts/gen_pages.py` | 生成 6 个页面（同壳不同内容，改导航/文案改这里；NAV 含「复习」→ `review.html`、**「原文」→ `pdf.html`**（该页本身**手工维护**不进生成）；`sentences`/`review` 页额外载 `en-de.js`） |
 | `scripts/pack_en.py` | 打包 `dist/`（并把全量清单注入 `sw.js` / `offline.js`） |
 | `scripts/_test_en_site.py` | Playwright 冒烟测试（21 项断言） |
 | `scripts/extract_blue.py` | 从 PDF 按字符取色抽取**书本蓝色强调**（RGB 0,158,231）→ `en15000-blue.json`（12783 段） |
 | `assets/js/annotate-en.js` | **三态音标标注**（关 / 常用 / 全部）：词典取自本书 7052 条音标，ruby 标注，右下角浮动开关 |
 | `scripts/_test_en_features.py` | 三项新功能 Playwright 测试（音标三态 / 蓝色强调 / 中德对照） |
 | `scripts/_test_en_links.py` | 六项联动功能 Playwright 测试（**32 项断言**：Part 导航 / 场景互跳 / 单词联动 / 搜索 / 音素反查 / 进度 / Anki；自带 http.server，**需 anaconda 解释器**：`/Users/Jack/opt/anaconda3/bin/python3 scripts/_test_en_links.py`） |
+| `scripts/_test_srs.py` | **A3 Leitner SRS** Playwright 测试（3 个 context：首页/导览到期计数 + 复习卡渲染 + 升盒/回盒 + done 实时入/出队列 + 一次性迁移；自带 http.server 8652，**需 anaconda 解释器**：`/Users/Jack/opt/anaconda3/bin/python3 scripts/_test_srs.py`） |
 | `assets/img/favicon.svg` / `og-image.svg` | **Logo 源文件**（**双色块版**：Jian 指定的参考图——深海军蓝 #003366 + 青绿 #00CCCC 两平行色块，白字「英语」跨块 + 青绿拼音「Ying Yu」，透明底）；改 logo 只改这两个 SVG |
 | `scripts/gen_logos.py` | Logo SVG → PNG 栅格化（Playwright Chromium）：favicon-16/32/48、apple-touch-icon、icon-192/512/512-maskable、logo-mark、og-image |
 | `scripts/_check_logo.py` | Logo 本地验证（7 项断言：SVG 内容 / 引用版本号 / 导航 mark 渲染） |
@@ -84,6 +86,17 @@
 - 仓库：https://github.com/jianwu-atlas/englishheft （描述用中文）
 
 ## 更新记录
+
+- 2026-10-16（**A3 · 场景级 Leitner SRS 复习队列**，commit 见下）：
+  - **需求**：Jian 选「A·学习效果提升」后拍板「A3 = 场景级（Leitner）」。把场景「已学打勾」升级为 Leitner 五盒间隔复习：记住升盒、又忘回盒 1，间隔 1/2/4/7/15 天；首页/大类导览加「今日到期 N 场景」入口 → 独立复习页。
+  - **数据**：`localStorage englishheft_srs = { "1.1.1": {b: 盒1-5, d: 到期时间戳ms} }`；`LEITNER_DAYS=[1,2,4,7,15]`。`srsEnroll(no,box)`/`srsAdvance`/`srsReset`/`srsDrop`/`srsDue`（`d<=now` 升序）/`srsTotal`。**一次性迁移 `srsMigrate()`**（`DOMContentLoaded` 里跑，幂等）：A3 上线前已「标记已学」但无 SRS 条目的场景入盒 1、今日到期。
+  - **联动**：`bindDone` 打勾时**入盒 1**（`srsEnroll(no,1)`）、取消时**出队列**（`srsDrop`）。
+  - **新增 `review.html`**（第 7 页）：`renderReview` 列今日到期场景卡（盒位徽章 + 词条三行 + 场景句 + 🔊/🇩🇪 德文复用 `gerHtml`），自评按钮 `✅ 记住了·升盒`（`srsAdvance` 后重渲）/`❌ 又忘了·回盒 1`（`srsReset` 后重渲）；空态引导去标记已学。`gen_pages.py` NAV/PAGES 加 review（**7 项导航**），`sentences`/`review` 页均载 `en-de.js`。
+  - **入口**：首页 `renderStart` 第 1 张卡「复习」（今日到期 N 场景，红字强调）；大类导览 `renderSections` 进度卡下加「📅 复习队列 · N 场景今日到期 →」。
+  - **样式**（`english.css`）：`.rev-box`（盒位徽章）/`.rev-actions`/`.rev-keep`（ok 绿）/`.rev-forget`（accent）/`.rev-head`/`.rev-sub`/`.rev-sents`/`.rev-empty`/`.rev-due`/`.rev-entry`。
+  - **版本**：`site.js v7→v8`、`english.css v10→v11`（`gen_pages.py` + `pdf.html` 手工同步；**6 生成页 + pdf.html = 7 页**）。
+  - **验证**：新增 `scripts/_test_srs.py`（3 context，全绿：首页/导览计数=2、复习卡 2 张含 34 词/20 句、记住 1.1.1→盒2 队列 2→1、又忘 3.1.1→盒1 队列→0 空态、迁移 1.1.2→盒1、标记已学入盒1/取消移出、**0 JS 错误**）+ `_test_en_de.py`+`_test_en_links.py` 回归全绿；7 页均含复习导航/页脚链接。
+  - **部署**：GitHub Pages（push 即发）+ Cloudflare（`wrangler pages deploy dist`）；EdgeOne 依规则跳过。
 
 - 2026-10-16（**A2 · 整段场景连读**，commit `f9c1d9d`）：
   - **需求**：Jian 选「A·学习效果提升」后拍板落地 A1/A2/A3。A2 = 场景句页每个场景标题加「▶ 连读」按钮，**链式** `speechSynthesis` 顺序朗读**整场景全部句子**（不受「只看有解析」过滤影响），读完自动停止。

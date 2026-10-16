@@ -1430,6 +1430,20 @@ ruby.ipa:hover rt { color: var(--accent); }
 .s-speak-scene { font-size: 11.5px; padding: 3px 10px; margin-left: 10px; border-radius: 99px; border: 1px solid var(--accent);
   background: var(--accent-soft); color: var(--accent); cursor: pointer; white-space: nowrap; font-family: inherit; }
 .s-speak-scene:hover { background: var(--accent); color: #fff; }
+/* A3 复习队列（Leitner SRS） */
+.rev-box { background: var(--accent-soft); color: var(--accent); }
+.rev-head .prog-head { margin-bottom: 4px; }
+.rev-sub { font-size: 13px; color: var(--ink-3); margin: 0 0 12px; line-height: 1.6; }
+.rev-sents { margin-top: 12px; border-top: 1px dashed var(--line); padding-top: 10px; }
+.rev-actions { display: flex; gap: 10px; margin-top: 14px; flex-wrap: wrap; }
+.rev-keep { border-color: var(--ok); color: var(--ok); background: transparent; }
+.rev-keep:hover { background: var(--ok); color: #fff; }
+.rev-forget { border-color: var(--accent); color: var(--accent); background: transparent; }
+.rev-forget:hover { background: var(--accent); color: #fff; }
+.rev-empty { text-align: center; padding: 40px 24px; color: var(--ink-3); line-height: 2; }
+.rev-due { color: var(--accent); font-weight: 700; }
+.rev-entry { display: inline-block; margin-top: 10px; font-size: 13.5px; color: var(--accent); }
+.rev-entry:hover { text-decoration: underline; }
 
 /* hash 定位闪烁 */
 .sc-scene.flash { outline: 3px solid var(--gold); outline-offset: 2px; transition: outline-color .5s; }

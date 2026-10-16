@@ -16,6 +16,7 @@ NAV = [
     ("sentences.html", "场景句", "Sentences"),
     ("phonetics.html", "语音·音标", "Phonetics"),
     ("sections.html", "大类导览", "Sections"),
+    ("review.html", "复习", "Review"),
     ("pdf.html", "原文", "Original"),
 ]
 
@@ -29,6 +30,8 @@ PAGES = [
      "从全书 7000 条音标反推的英语音素表：25 元音 + 26 辅音，每个音素配书中例词。"),
     ("sections", "sections.html", "大类导览", "Sections",
      "17 个 Section 的构成与学习建议，按 Part / 场景逐层展开。"),
+    ("review", "review.html", "复习", "Review",
+     "Leitner 五盒间隔复习队列（1/2/4/7/15 天）：今日到期的「已学」场景在此自评，记住升盒、又忘回盒 1。"),
 ]
 
 SHELL = """<!DOCTYPE html>
@@ -41,7 +44,7 @@ SHELL = """<!DOCTYPE html>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,300..700;1,9..144,300..700&family=IBM+Plex+Sans:wght@400;500;600;700&family=IBM+Plex+Mono:ital,wght@0,400;0,500;1,400&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="assets/css/english.css?v=10">
+<link rel="stylesheet" href="assets/css/english.css?v=11">
 <link rel="icon" type="image/svg+xml" href="assets/img/favicon.svg?v=3">
 <link rel="icon" type="image/png" sizes="32x32" href="assets/img/favicon-32.png?v=3">
 <link rel="icon" type="image/png" sizes="16x16" href="assets/img/favicon-16.png?v=3">
@@ -95,7 +98,7 @@ SHELL = """<!DOCTYPE html>
 </main>
 
 <script src="assets/js/data/english.js?v=2"></script>
-{extra_scripts}<script src="assets/js/site.js?v=7"></script>
+{extra_scripts}<script src="assets/js/site.js?v=8"></script>
 <script src="assets/js/annotate-en.js?v=1"></script>
 <script src="assets/js/offline.js?v=1"></script>
 </body>
@@ -111,8 +114,8 @@ def main() -> int:
         foot = "\n".join(
             '      <a class="footer-chip" href="%s">%s</a>' % (h, z) for h, z, _ in NAV)
         title_zh, title_em = (zh, en) if page != "index" else ("英语单词", "学习站")
-        # 场景句页额外加载 en-de.js（德文对照 + 逐词 IPA，由 scripts/build_en_de.py 生成）
-        extra = '<script src="assets/js/data/en-de.js?v=3"></script>\n' if page == "sentences" else ""
+        # 场景句 / 复习页额外加载 en-de.js（德文对照 + 逐词 IPA，由 scripts/build_en_de.py 生成）
+        extra = '<script src="assets/js/data/en-de.js?v=3"></script>\n' if page in ("sentences", "review") else ""
         html = SHELL.format(page=page, title=f"{zh} · {en}", desc=desc, nav=nav, foot=foot,
                             kicker="15000 英语单词口袋书", kickerEn=en,
                             titleZh=title_zh, titleEm=title_em, extra_scripts=extra)

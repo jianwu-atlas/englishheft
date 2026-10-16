@@ -148,6 +148,28 @@
   const DKEY = "englishheft_done";
   const getDone = () => { try { return new Set(JSON.parse(localStorage.getItem(DKEY) || "[]")); } catch (e) { return new Set(); } };
   const setDone = s => localStorage.setItem(DKEY, JSON.stringify([...s]));
+
+  /* ---------------- A3 · 场景级 Leitner SRS 复习队列（localStorage） ---------------- */
+  const RKEY = "englishheft_srs";           // { "1.1.1": {b: 盒1-5, d: 到期时间戳ms} }
+  const DAY = 86400000;
+  const LEITNER_DAYS = [1, 2, 4, 7, 15];     // 盒 1..5 的复习间隔（天）
+  const srsGet = () => { try { return JSON.parse(localStorage.getItem(RKEY) || "{}") || {}; } catch (e) { return {}; } };
+  const srsSet = o => localStorage.setItem(RKEY, JSON.stringify(o));
+  const srsEnroll = (no, box) => { const b = Math.min(Math.max(box || 1, 1), LEITNER_DAYS.length); const o = srsGet(); o[no] = { b, d: Date.now() + LEITNER_DAYS[b - 1] * DAY }; srsSet(o); };
+  const srsAdvance = no => { const o = srsGet(); const e = o[no]; if (!e) return; e.b = Math.min(e.b + 1, LEITNER_DAYS.length); e.d = Date.now() + LEITNER_DAYS[e.b - 1] * DAY; srsSet(o); };
+  const srsReset = no => { const o = srsGet(); const e = o[no]; if (!e) return; e.b = 1; e.d = Date.now() + LEITNER_DAYS[0] * DAY; srsSet(o); };
+  const srsDrop = no => { const o = srsGet(); if (o[no]) { delete o[no]; srsSet(o); } };
+  const srsDue = () => { const o = srsGet(); const now = Date.now(); return Object.keys(o).filter(k => o[k].d <= now).sort((a, b) => a.localeCompare(b, "en", { numeric: true })); };
+  const srsDueCount = () => srsDue().length;
+  const srsTotal = () => Object.keys(srsGet()).length;
+  /* 一次性迁移：A3 上线前已「标记已学」的场景入盒 1、今日到期（幂等，已有 SRS 条目的不动） */
+  function srsMigrate() {
+    const o = srsGet(); let changed = false;
+    getDone().forEach(no => { if (!o[no]) { o[no] = { b: 1, d: Date.now() }; changed = true; } });
+    if (changed) srsSet(o);
+  }
+  window.__enSrs = { get: srsGet, due: srsDue, enroll: srsEnroll, advance: srsAdvance, reset: srsReset, drop: srsDrop };
+
   const doneBtn = sc => {
     const d = getDone().has(sc.no);
     return `<button class="sc-done${d ? " on" : ""}" data-done="${sc.no}" title="${d ? "取消本场景「已学」标记" : "标记本场景已学"}">${d ? "✓ 已学" : "○ 标记已学"}</button>`;
@@ -156,7 +178,8 @@
     $$(".sc-done", app).forEach(b => b.addEventListener("click", e => {
       e.stopPropagation();
       const s = getDone();
-      s.has(b.dataset.done) ? s.delete(b.dataset.done) : s.add(b.dataset.done);
+      if (s.has(b.dataset.done)) { s.delete(b.dataset.done); srsDrop(b.dataset.done); }   // 取消已学 → 移出复习队列
+      else { s.add(b.dataset.done); srsEnroll(b.dataset.done, 1); }                      // 标记已学 → 入盒 1
       setDone(s);
       b.classList.toggle("on", s.has(b.dataset.done));
       b.textContent = s.has(b.dataset.done) ? "✓ 已学" : "○ 标记已学";
@@ -230,7 +253,9 @@
   function renderStart(app) {
     const { secs, nSc, nW, nS, nN } = stats();
     const ph = ENGLISH.phonetics;
+    const nDue = srsDueCount();
     const cards = [
+      ["review.html", "复习", "Review", nDue ? `<span class="rev-due">${nDue} 场景今日到期</span>` : "今日无到期场景", `Leitner 五盒间隔复习（${LEITNER_DAYS.join("/")} 天）·「标记已学」场景自动入队`],
       ["vocab.html", "词汇", "Vocabulary", `${nSc} 场景 · ${nW} 词条`, "英文 / 音标 / 中文三行对照，点词即朗读"],
       ["sentences.html", "场景句", "Sentences", `${nS} 句 · ${nN} 条解析`, "Top10 场景句 + 短语用法 / 单词说明 / 句型搭配"],
       ["phonetics.html", "语音·音标", "Phonetics", `${ph.vowels.length} 元音 · ${ph.consonants.length} 辅音`, "从全书音标反推的音素表，每个音素配书中例词"],
@@ -575,6 +600,7 @@
     const { secs, nSc } = stats();
     const done = getDone();
     const totalDone = done.size;
+    const nDue = srsDueCount();
     const secProg = s => {
       let tot = 0, dn = 0;
       s.parts.forEach(p => p.scenes.forEach(sc => { tot++; if (done.has(sc.no)) dn++; }));
@@ -585,6 +611,7 @@
       <div class="prog-card card">
         <div class="prog-head">🗸 学习进度 <b>${totalDone}</b> / ${nSc} 场景（在词汇 / 场景句页的场景卡上点「标记已学」）</div>
         <div class="prog"><i style="width:${nSc ? (totalDone / nSc * 100) : 0}%"></i></div>
+        <a class="rev-entry" href="review.html">📅 复习队列 · <b>${nDue}</b> 场景今日到期 →</a>
       </div>
       ${ENGLISH.intros.map(it => {
         const s = secs.find(x => x.no === it.no);
@@ -607,6 +634,59 @@
       }).join("")}`;
     setStat(`${secs.length} 个大类 · 已完成 ${totalDone}/${nSc} 场景`);
     bindTools(app);
+  }
+
+  /* ---------------- A3 · 复习队列（Leitner SRS） ---------------- */
+  function reviewCard(no) {
+    const idx = SCENE_INDEX[no];
+    if (!idx) return "";
+    const sc = idx.sc;
+    const e = srsGet()[no] || {};
+    const box = e.b || 1;
+    const words = sc.words.map(w => `
+      <div class="en-word">
+        <p class="en-en">${esc(w.en)}<button class="s-speak" data-t="${escA(w.en)}" title="朗读">🔊</button></p>
+        <p class="s-pron">${esc(w.ipa)}</p>
+        <p class="en-zh">${esc(w.zh)}<span class="en-pos">${esc(w.pos)}</span></p>
+      </div>`).join("");
+    const sents = sc.sentences.map((s, i) => {
+      const g = (typeof EN_DE !== "undefined" && EN_DE[no + ":" + i]) || null;
+      return `<div class="sc-turn"><span class="sc-spk">·</span><div class="sc-turn-body">
+        <p class="s-de">${esc(s.en)}<button class="s-speak" data-t="${escA(s.en)}" title="朗读">🔊</button></p>
+        ${g ? gerHtml(g) : ""}
+        <p class="s-zh">${esc(s.zh)}</p>
+      </div></div>`;
+    }).join("");
+    return `<section class="sc-scene card rev-card" data-sceneno="${no}">
+      <h2 class="sc-title"><span class="sc-num">${esc(no.split(".").pop())}</span>${esc(sc.zh)}
+        <span class="sc-badge rev-box">盒 ${box} · 间隔 ${LEITNER_DAYS[box - 1]} 天</span>
+        <a class="sc-xlink" href="sentences.html#sc-${no.replace(/\./g, "-")}" title="看本场景全部句子与解析">→ 场景句</a></h2>
+      <div class="en-words">${words}</div>
+      <div class="rev-sents">${sents}</div>
+      <div class="rev-actions">
+        <button class="chip rev-keep" data-keep="${no}">✅ 记住了 · 升盒</button>
+        <button class="chip rev-forget" data-forget="${no}">❌ 又忘了 · 回盒 1</button>
+      </div>
+    </section>`;
+  }
+  function renderReview(app) {
+    const due = srsDue();
+    const total = srsTotal();
+    const nDone = getDone().size;
+    app.innerHTML = `
+      ${toolBar()}
+      <div class="prog-card card rev-head">
+        <div class="prog-head">📅 复习队列 · 今日到期 <b>${due.length}</b> 场景（队列共 ${total} 场景 · 已学 ${nDone}）</div>
+        <p class="rev-sub">Leitner 五盒：记住 → 升盒（间隔 ${LEITNER_DAYS.join(" / ")} 天）；又忘 → 回盒 1。新「标记已学」的场景自动入盒 1。</p>
+        <a class="chip rev-exit" href="sections.html">← 返回大类导览</a>
+      </div>
+      ${due.length ? due.map(reviewCard).join("") :
+        `<div class="card rev-empty">🎉 今日无到期场景。<br>去 <a href="vocab.html">词汇</a> / <a href="sentences.html">场景句</a> 页的场景卡上「标记已学」，它们会按 Leitner 间隔进入复习队列。</div>`}
+    `;
+    setStat(`今日到期 ${due.length} 场景`);
+    bindTools(app);
+    $$(".rev-keep", app).forEach(b => b.addEventListener("click", () => { srsAdvance(b.dataset.keep); renderReview(app); }));
+    $$(".rev-forget", app).forEach(b => b.addEventListener("click", () => { srsReset(b.dataset.forget); renderReview(app); }));
   }
 
   /* ---------------- 主题 ---------------- */
@@ -638,6 +718,7 @@
     sentences: renderSentences,
     phonetics: renderPhonetics,
     sections: renderSections,
+    review: renderReview,
   };
   function render(app) {
     const fn = RENDER[document.body.dataset.page] || renderStart;
@@ -650,6 +731,7 @@
   document.addEventListener("DOMContentLoaded", () => {
     initTheme();
     initBurger();
+    srsMigrate();   // A3：把已「标记已学」但无 SRS 条目的场景一次性入盒 1（幂等）
     const app = $("#app");
     if (app) render(app);
   });
