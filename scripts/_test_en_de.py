@@ -77,6 +77,29 @@ try:
         fn = pg.evaluate("() => typeof window.__enSpeakDe === 'function'")
         assert fn, "window.__enSpeakDe 应为函数"
 
+        # --- A2 整段场景连读（每场景「▶ 连读」按钮 + 会话函数暴露） ---
+        n_sscene = pg.locator(".s-speak-scene").count()
+        print(f"[i] A2 .s-speak-scene 连读按钮数量 = {n_sscene}")
+        assert n_sscene > 0, "每个场景标题应有「▶ 连读」按钮"
+        fn_sc = pg.evaluate("() => typeof window.__enSpeakScene === 'function'")
+        fn_st = pg.evaluate("() => typeof window.__enStopScene === 'function'")
+        assert fn_sc, "window.__enSpeakScene 应为函数"
+        assert fn_st, "window.__enStopScene 应为函数"
+        # 点击连读：同步切「⏹ 停止」；headless 无音频，onend 可能不触发或立即复位，故文案断言从宽
+        before_err = len(console_errs)
+        pg.locator(".s-speak-scene").first.click()
+        pg.wait_for_timeout(80)
+        txt = pg.locator(".s-speak-scene").first.inner_text()
+        print(f"[i] A2 点击后连读按钮文案 = {txt!r}")
+        assert txt in ("⏹ 停止", "▶ 连读"), f"A2 连读按钮文案异常: {txt!r}"
+        # 显式停止（模拟 Esc/停止路径），确保 stopSceneSpeak 不报错且按钮复位
+        pg.evaluate("() => window.__enStopScene()")
+        pg.wait_for_timeout(60)
+        txt2 = pg.locator(".s-speak-scene").first.inner_text()
+        print(f"[i] A2 stopSceneSpeak() 后文案 = {txt2!r}")
+        assert txt2 == "▶ 连读", "A2 停止后按钮应复位为「▶ 连读」"
+        assert len(console_errs) == before_err, "A2 连读/停止过程不应新增 console error"
+
         # 切到其它 Part：全部 17 大类均已补齐德文数据，应正常渲染德文行 + 英文句
         # Section 2 的 chip
         pg.goto(B + "sentences.html", wait_until="networkidle")

@@ -61,10 +61,45 @@
     speechSynthesis.speak(u);
   }
   window.__enSpeakDe = speakDe;
+  /* ---------------- 整段场景连读（链式 speechSynthesis，会话 id 防串读） ---------------- */
+  let sceneSeq = 0;          // 会话序号：每次发起/停止自增，旧会话 onend 据此失效
+  let activeSceneBtn = null; // 当前正在连读的按钮（用于切「⏹ 停止」文案与复位）
+  function stopSceneSpeak() {
+    sceneSeq++;
+    if ("speechSynthesis" in window) speechSynthesis.cancel();
+    if (activeSceneBtn) { activeSceneBtn.textContent = "▶ 连读"; activeSceneBtn = null; }
+  }
+  function speakScene(sc, useDe, btn) {
+    if (!("speechSynthesis" in window)) return;
+    const hasDE = typeof EN_DE !== "undefined";
+    // 连读整场景全部句子（不受「只看有解析」过滤影响）；德文模式取 EN_DE 德文，否则英文
+    const items = sc.sentences.map((s, idx) =>
+      (useDe && hasDE && EN_DE[sc.no + ":" + idx]) ? EN_DE[sc.no + ":" + idx].de : s.en);
+    if (activeSceneBtn && activeSceneBtn !== btn) activeSceneBtn.textContent = "▶ 连读";
+    const my = ++sceneSeq;
+    activeSceneBtn = btn; btn.textContent = "⏹ 停止";
+    let i = 0;
+    function step() {
+      if (sceneSeq !== my) return;              // 已被停止 / 新会话取代
+      if (i >= items.length) { stopSceneSpeak(); return; }
+      const t = items[i++];
+      if (!t) { step(); return; }
+      const u = new SpeechSynthesisUtterance(t);
+      u.lang = useDe ? "de-DE" : "en-US";
+      u.rate = curSpeed().r;
+      if (useDe && deVoice) u.voice = deVoice; else if (!useDe && voice) u.voice = voice;
+      u.onend = step; u.onerror = step;
+      speechSynthesis.speak(u);
+    }
+    speechSynthesis.cancel();
+    step();
+  }
+  window.__enSpeakScene = speakScene;
+  window.__enStopScene = stopSceneSpeak;
   document.addEventListener("keydown", e => {
     const t = e.target;
     if (t && (t.nodeName === "INPUT" || t.nodeName === "TEXTAREA" || t.isContentEditable)) return;
-    if (e.key === "Escape") { speechSynthesis.cancel(); return; }
+    if (e.key === "Escape") { stopSceneSpeak(); return; }
     if (e.ctrlKey && e.code === "Space") {
       e.preventDefault();
       const sel = String(window.getSelection()).trim();
@@ -420,6 +455,7 @@
         <button class="wd-clear" id="wdClear">✕ 清除高亮</button>
       </div>` : "";
 
+    stopSceneSpeak();  // 切换 Section/Part/状态时停止进行中的整段连读
     app.innerHTML = `
       <div class="chip-row sc-tabs">
         ${secs.map((s, i) => `<button class="chip ${i === S_STATE.sec ? "on" : ""}" data-s="${i}">${s.no}. ${esc(s.zh)}<span class="sc-cnt">${s.parts.reduce((a, p) => a + p.scenes.reduce((c, x) => c + x.sentences.length, 0), 0)}</span></button>`).join("")}
@@ -434,7 +470,8 @@
           <h2 class="sc-title"><span class="sc-num">${esc(sc.no.split(".").pop())}</span>${esc(sc.zh)}
             <span class="sc-badge">${sents.length} 句</span>
             <a class="sc-xlink" href="vocab.html#sc-${sc.no.replace(/\./g, "-")}" title="看本场景的 ${sc.words.length} 个词条">→ ${sc.words.length} 词</a>
-            ${doneBtn(sc)}</h2>
+            ${doneBtn(sc)}
+            <button class="s-speak-scene" data-sceneno="${sc.no}" title="整段连读本场景（随「🇩🇪 德语对照」开关读英文/德文，再点或按 Esc 停止）">▶ 连读</button></h2>
           ${sents.map(({ s, idx }) => {
             let html;
             if (isT) {
@@ -483,6 +520,14 @@
       `【${sc.no} ${sc.zh}】\n` + sc.sentences.map(x => x.en).join("\n")).join("\n\n"));
     bindDone(app, () => {});
     bindTools(app, () => renderSentences(app));
+    // 整段场景连读：随「🇩🇪 德语对照」开关读英文/德文；再点同按钮或 Esc 停止
+    $$(".s-speak-scene", app).forEach(b => b.addEventListener("click", e => {
+      e.stopPropagation();
+      const sc = SCENE_INDEX[b.dataset.sceneno] && SCENE_INDEX[b.dataset.sceneno].sc;
+      if (!sc) return;
+      if (activeSceneBtn === b) { stopSceneSpeak(); return; }
+      speakScene(sc, showDe(), b);
+    }));
     if (target) flashScene(app);
   }
 

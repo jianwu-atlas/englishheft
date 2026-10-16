@@ -1426,6 +1426,10 @@ ruby.ipa:hover rt { color: var(--accent); }
   background: transparent; color: var(--ink-3); cursor: pointer; white-space: nowrap; font-family: inherit; }
 .sc-done:hover { border-color: var(--gold); color: var(--ink-2); }
 .sc-done.on { background: var(--ok); border-color: var(--ok); color: #fff; }
+/* 整段场景连读按钮（场景标题行） */
+.s-speak-scene { font-size: 11.5px; padding: 3px 10px; margin-left: 10px; border-radius: 99px; border: 1px solid var(--accent);
+  background: var(--accent-soft); color: var(--accent); cursor: pointer; white-space: nowrap; font-family: inherit; }
+.s-speak-scene:hover { background: var(--accent); color: #fff; }
 
 /* hash 定位闪烁 */
 .sc-scene.flash { outline: 3px solid var(--gold); outline-offset: 2px; transition: outline-color .5s; }

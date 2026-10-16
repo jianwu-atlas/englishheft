@@ -2,3 +2,9 @@ dist/
 .edgeone/
 .DS_Store
 .env
+__pycache__/
+# 蒸馏中间产物（tr_/work_ 逐波翻译、*.bak 备份、*_progress 断点续跑缓存）不入库
+data/tr_*.json
+data/work_*.json
+data/*.bak.json
+data/*_progress.json
