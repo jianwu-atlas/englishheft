@@ -112,7 +112,7 @@ def main() -> int:
             '      <a class="footer-chip" href="%s">%s</a>' % (h, z) for h, z, _ in NAV)
         title_zh, title_em = (zh, en) if page != "index" else ("英语单词", "学习站")
         # 场景句页额外加载 en-de.js（德文对照 + 逐词 IPA，由 scripts/build_en_de.py 生成）
-        extra = '<script src="assets/js/data/en-de.js?v=2"></script>\n' if page == "sentences" else ""
+        extra = '<script src="assets/js/data/en-de.js?v=3"></script>\n' if page == "sentences" else ""
         html = SHELL.format(page=page, title=f"{zh} · {en}", desc=desc, nav=nav, foot=foot,
                             kicker="15000 英语单词口袋书", kickerEn=en,
                             titleZh=title_zh, titleEm=title_em, extra_scripts=extra)
