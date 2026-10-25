@@ -1497,3 +1497,16 @@ mark.wd-hl { background: var(--wd-teal-soft); color: var(--wd-teal); border-radi
 .prog-head b { color: var(--accent); }
 .prog-badge { color: var(--ok); font-weight: 700; }
 .en-scene-chip.done { background: var(--ok); border-color: var(--ok); color: #fff; }
+
+/* ---------------- 页脚外链（jwlab / 个人网站 / LinkedIn） ---------------- */
+.footer-links { display: flex; flex-wrap: wrap; gap: 10px; align-items: center; justify-content: center; margin-bottom: 14px; }
+.footer-link {
+  display: inline-flex; align-items: center; gap: 7px;
+  font-family: var(--font-mono); font-size: 11.5px;
+  padding: 4px 13px 4px 9px; border-radius: 99px;
+  border: 1px solid var(--line); color: var(--ink-2);
+  text-decoration: none; transition: all .18s;
+}
+.footer-link:hover { border-color: var(--accent); color: var(--accent); }
+.footer-link img { width: 18px; height: 18px; border-radius: 4px; flex: none; }
+.footer-link svg { width: 15px; height: 15px; flex: none; }
