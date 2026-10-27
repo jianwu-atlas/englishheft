@@ -11,9 +11,12 @@ import time
 
 from playwright.sync_api import sync_playwright
 
-DIST = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), "dist")
-B = "http://127.0.0.1:8654/"
-PORT = 8654
+REPO = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+# 第一个参数：要测的目录（默认 dist；传 "." 可测仓库根目录 = GitHub Pages 线上形态）
+SUBDIR = sys.argv[1] if len(sys.argv) > 1 else "dist"
+PORT = int(sys.argv[2]) if len(sys.argv) > 2 else 8654
+DIST = os.path.join(REPO, SUBDIR)
+B = f"http://127.0.0.1:{PORT}/"
 CORE_MIN = 28          # 全量 29 个文件减去教材 PDF
 
 

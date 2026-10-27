@@ -35,20 +35,16 @@ def main() -> int:
 
     all_files = sorted("./" + str(p.relative_to(DIST)).replace("\\", "/")
                        for p in DIST.rglob("*") if p.is_file())
-    # 核心包 = 全量减去教材 PDF（PDF 6.5 MB，改为「下载全部」时按需缓存）
+    if "./filelist.json" not in all_files:
+        all_files = sorted(all_files + ["./filelist.json"])
+    # 核心包 = 全量减去教材 PDF（PDF 6.5 MB，改成「下载全部」时按需缓存）
     core_files = [f for f in all_files if not f.lower().endswith(".pdf")]
-    sw = DIST / "sw.js"
-    if sw.exists():
-        t = sw.read_text(encoding="utf-8")
-        t = t.replace('"__CORE__"', json.dumps(core_files, ensure_ascii=False))
-        t = t.replace('"__ALL__"', json.dumps(all_files, ensure_ascii=False))
-        sw.write_text(t, encoding="utf-8")
-    oj = DIST / "assets" / "js" / "offline.js"
-    if oj.exists():
-        t = oj.read_text(encoding="utf-8").replace(
-            "(function () {",
-            "(function () {\n  window.__DH_SW_FILES = " + json.dumps(all_files, ensure_ascii=False) + ";", 1)
-        oj.write_text(t, encoding="utf-8")
+    payload = json.dumps({"core": core_files, "all": all_files}, ensure_ascii=False)
+
+    # sw.js 在运行时读 filelist.json：根目录（GitHub Pages）与 dist/（Cloudflare）都必须有，
+    # 这样两处部署行为一致，也不再依赖打包时往 sw.js 里注入清单。
+    (DIST / "filelist.json").write_text(payload, encoding="utf-8")
+    (ROOT / "filelist.json").write_text(payload, encoding="utf-8")
 
     size = sum(f.stat().st_size for f in DIST.rglob("*") if f.is_file())
     print(f"[✓] 已打包到 {DIST}")

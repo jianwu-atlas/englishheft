@@ -60,8 +60,8 @@ with sync_playwright() as p:
     res.append((f"导航 {pg.locator('.nav-links a').count()} 项", pg.locator(".nav-links a").count() == 7))
     sw = pg.evaluate("async () => { const r = await navigator.serviceWorker.getRegistration(); return r ? (r.active?.state || 'reg') : 'none'; }")
     res.append((f"Service Worker：{sw}", sw in ("activated", "activating", "reg")))
-    res.append((f"离线清单 {pg.evaluate('() => (window.__DH_SW_FILES || []).length')} 项",
-                pg.evaluate("() => (window.__DH_SW_FILES || []).length") > 5))
+    n_fl = pg.evaluate("async () => { try { const j = await (await fetch('filelist.json')).json(); return (j.all || []).length } catch (e) { return 0 } }")
+    res.append((f"离线清单 filelist.json {n_fl} 项", n_fl > 5))
     br.close()
 
 print("\n=== Englishheft 站点验证 ===")

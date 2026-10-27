@@ -27,6 +27,19 @@
       .catch(err => console.warn("[offline] SW 注册失败：", err));
   }
 
+  /* ---------- 文件清单（filelist.json，由 pack_en.py 生成；离线时读缓存） ---------- */
+  let FL = null;
+  async function fileList() {
+    if (FL) return FL;
+    try {
+      let res = null;
+      try { res = await caches.match("./filelist.json", { ignoreSearch: true }); } catch (e) { /* ignore */ }
+      if (!res) res = await fetch("filelist.json", { cache: "no-cache" });
+      if (res && res.ok) FL = await res.json();
+    } catch (e) { /* ignore */ }
+    return FL || { core: [], all: [] };
+  }
+
   /* ---------- 缓存统计（文件数 / 体积 / 是否含 PDF） ---------- */
   async function readStats() {
     let n = 0, bytes = 0, hasPdf = false;
@@ -42,8 +55,9 @@
         }
       }
     } catch (e) { /* ignore */ }
-    const expect = (window.__DH_SW_FILES || []).length;
-    const core = expect ? expect - 1 : 0;          // 全量清单里 PDF 只占 1 条，其余为核心包
+    const fl = await fileList();
+    const expect = fl.all.length;
+    const core = fl.core.length;    // 核心包条目数（不含 PDF）
     return { n: expect ? Math.min(n, expect) : n, mb: bytes / 1048576, hasPdf, expect, core };
   }
 

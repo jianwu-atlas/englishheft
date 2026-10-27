@@ -1,15 +1,32 @@
 /* ============================================================
    sw.js · Englishheft 离线缓存（PWA）
-   install 自动预缓存「核心包」（全部页面 + JS + CSS + 图标，约 2.2 MB，不含 PDF）
-   fetch 同源 GET：缓存优先（ignoreSearch，让 ?v=N 也能命中预缓存）→ 未命中再走网络
-   message: cache-all（补齐 PDF 等剩余文件，逐文件回执进度）/ cache-clear / ping
-   CORE_FILES / ALL_FILES 由 scripts/pack_en.py 打包时注入
+   ------------------------------------------------------------
+   文件清单来自同级 filelist.json（由 scripts/pack_en.py 生成）：
+     { "core": [核心包：全部页面 + JS/CSS/图标，不含 PDF], "all": [全部文件] }
+   —— 不再往 sw.js 里注入清单：GitHub Pages 直接发布仓库根目录，
+      注入只在 dist/ 生效，会导致线上仍是占位符（历史 bug）。
+   install：自动预缓存 core（约 2.1 MB）
+   fetch：同源 GET 缓存优先（ignoreSearch，?v=N 也能命中）→ 未命中走网络
+   message：cache-all（补齐剩余，含 PDF，逐文件回执）/ cache-clear / ping
+   ⚠️ 每次发版 bump VERSION，否则老客户端不会换新缓存。
    ============================================================ */
 "use strict";
 
-const VERSION = "englishheft-v2";
-const CORE_FILES = "__CORE__";
-const ALL_FILES = "__ALL__";
+const VERSION = "englishheft-v3";
+const SHELL = ["./", "./index.html", "./manifest.webmanifest", "./filelist.json"];
+
+/* 读清单；失败时退回 SHELL，保证 install 不整体失败 */
+async function manifest() {
+  try {
+    const r = await fetch("./filelist.json", { cache: "no-store" });
+    if (!r.ok) throw new Error(String(r.status));
+    const j = await r.json();
+    const core = [...new Set((j.core || []).concat(["./filelist.json"]))];
+    return { core, all: [...new Set(j.all || [])] };
+  } catch (e) {
+    return { core: SHELL, all: SHELL };
+  }
+}
 
 /* 逐文件缓存：单个失败不影响其余，边缓存边回报进度 */
 async function cacheList(cache, list, onProgress) {
@@ -33,8 +50,8 @@ const pathOf = u => new URL(u, self.location.href).pathname;
 
 self.addEventListener("install", e => {
   e.waitUntil((async () => {
-    const c = await caches.open(VERSION);
-    await cacheList(c, CORE_FILES);      // 自动预缓存核心包（首次访问后台完成）
+    const [c, m] = await Promise.all([caches.open(VERSION), manifest()]);
+    await cacheList(c, m.core);       // 首次访问后台自动缓存核心包
     await self.skipWaiting();
   })().catch(() => self.skipWaiting()));
 });
@@ -86,17 +103,17 @@ self.addEventListener("message", e => {
 
   if (msg.type === "cache-all") {
     e.waitUntil((async () => {
-      const c = await caches.open(VERSION);
+      const [c, m] = await Promise.all([caches.open(VERSION), manifest()]);
       const have = new Set((await c.keys()).map(r => pathOf(r.url)));
-      const want = ALL_FILES.filter(u => !have.has(pathOf(u)));
+      const want = m.all.filter(u => !have.has(pathOf(u)));
       if (!want.length) {
-        reply({ type: "cache-all-done", done: 0, total: 0, failed: [], all: ALL_FILES.length });
+        reply({ type: "cache-all-done", done: 0, total: 0, failed: [], all: m.all.length });
         return;
       }
       const res = await cacheList(c, want, (n, t, f) =>
         reply({ type: "cache-progress", done: n, total: t, failed: f }));
-      reply({ type: "cache-all-done", ...res, all: ALL_FILES.length });
-    })().catch(err => reply({ type: "cache-all-done", done: 0, total: 0, failed: [String(err)], all: ALL_FILES.length })));
+      reply({ type: "cache-all-done", ...res, all: m.all.length });
+    })().catch(err => reply({ type: "cache-all-done", done: 0, total: 0, failed: [String(err)], all: 0 })));
     return;
   }
 
