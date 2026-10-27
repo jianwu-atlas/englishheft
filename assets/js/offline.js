@@ -50,7 +50,8 @@
           const res = await c.match(req, { ignoreSearch: true });
           if (!res) continue;
           n++;
-          bytes += Number(res.headers.get("content-length") || 0);
+          // 用 blob 实际字节数：Content-Length 在 GitHub Pages 上是 gzip 后的传输大小（0.7 MB），会误导
+          try { bytes += (await res.clone().blob()).size; } catch (e) { /* ignore */ }
           if (PDF_RE.test(req.url)) hasPdf = true;
         }
       }

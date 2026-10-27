@@ -100,7 +100,7 @@ SHELL = """<!DOCTYPE html>
 <script src="assets/js/data/english.js?v=2"></script>
 {extra_scripts}<script src="assets/js/site.js?v=9"></script>
 <script src="assets/js/annotate-en.js?v=2"></script>
-<script src="assets/js/offline.js?v=3"></script>
+<script src="assets/js/offline.js?v=4"></script>
 </body>
 </html>
 """

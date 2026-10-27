@@ -95,7 +95,7 @@
   - **诊断**：原实现只在 install 缓存 3 个外壳文件，其余靠手动点按钮；`cache.addAll()` 原子失败 + 「8 分钟后无条件标 ✓」→ 弱网下**假成功**；首访未被 SW 接管时走 `selfCacheAll`（只 fetch 不写 Cache Storage，等于没缓存）。实测：点击前 3 文件 → 点击后 30 文件 / 8.64 MB。
   - **改法**：① `sw.js` 重写 —— `install` 自动预缓存 **core（29 个，2.1 MB，不含 6.5 MB PDF）**；逐文件 `cacheList()`（单文件失败不影响其余，边缓存边回执）；`VERSION → englishheft-v3`（旧缓存自动清）；fetch 全部改 `caches.match(req, {ignoreSearch:true})`，让 `?v=N` 的静态资源也能命中预缓存（关键：无需逐页访问即可离线）。
   - ⚠️ **同批发现并修掉的重大隐患**：清单原本是打包时**注入 `dist/sw.js`**，而 **GitHub Pages 发布的是仓库根目录**，线上 `sw.js` 一直带着占位符 `"__ALL__"` → `addAll("__ALL__")` 逐字符请求全失败 → 用户点了「离线缓存」其实什么都没缓存（本地 dist 测试却是通的，极具迷惑性）。现改为**运行时读 `filelist.json`**（`pack_en.py` 同时写入根目录与 dist/），两处部署行为一致。
-  - ② `offline.js` 重写为**离线包状态面板**：左下角按钮三态（📥 未缓存 / ✓ 核心已缓存 / ✓ 离线可用），点开面板显示 核心 x/28、PDF 是否就绪、占用 MB（`content-length` 求和，不读 blob）、进度条、📥 下载全部 / 🗑 清理；`cache-all` 只补缺的文件（已缓存 PDF 时 1s 完成）；新增断网提示条 `#netBar`（面板打开时隐藏）；iOS 加主屏提示改为**首访即提示**（原来只在缓存后提示）。
+  - ② `offline.js` 重写为**离线包状态面板**：左下角按钮三态（📥 未缓存 / ✓ 核心已缓存 / ✓ 离线可用），点开面板显示 核心 x/28、PDF 是否就绪、占用 MB（blob 实测字节，避免 GitHub Pages 的 gzip 传输值误导）、进度条、📥 下载全部 / 🗑 清理；`cache-all` 只补缺的文件（已缓存 PDF 时 1s 完成）；新增断网提示条 `#netBar`（面板打开时隐藏）；iOS 加主屏提示改为**首访即提示**（原来只在缓存后提示）。
   - **CSS**：`#offlinePanel` / `.of-*` / `#netBar` / `body.of-open`；版本 `english.css v13→v14`、`offline.js v1→v2`。
   - **验证**：新增 `scripts/_test_offline.py`（自动预缓存 29 文件/3s、面板状态、断网打开 4 个从未访问页面、下载全部后 PDF 就绪、断网 pdf.html 全绿；**可传目录参数**：`… _test_offline.py . 8655` 即按 GitHub Pages 根目录形态复测）；其余五个套件回归全绿。桌面 + 390px 移动端截图核对。
   - **已知取舍**：导航仍是 network-first（保证内容新鲜），断网时控制台会留下 4 条 `ERR_INTERNET_DISCONNECTED`（来自失败的预取，非故障）；Google Fonts 跨域不缓存，离线回退系统字体。
