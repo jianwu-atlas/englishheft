@@ -1546,3 +1546,50 @@ mark.wd-hl { background: var(--wd-teal-soft); color: var(--wd-teal); border-radi
 .star-meta .sc-xlink { font-size: 12px; }
 .rev-star b { color: var(--gold); }
 .star-empty { font-size: 13.5px; }
+
+/* ============================================================
+   PWA 离线包：状态面板 + 断网提示条
+   ============================================================ */
+#offlinePanel {
+  position: fixed; left: 18px; bottom: 74px; z-index: 71;
+  display: none; width: 292px; max-width: calc(100vw - 36px);
+  padding: 12px 14px 13px; border-radius: 14px;
+  background: var(--paper-2); border: 1px solid var(--line);
+  box-shadow: var(--shadow); font-size: 12.5px; color: var(--ink-2);
+}
+#offlinePanel.show { display: block; }
+.of-head { display: flex; justify-content: space-between; align-items: center; font-weight: 600; color: var(--ink); margin-bottom: 7px; }
+.of-x { cursor: pointer; color: var(--ink-3); font-size: 12px; padding: 0 2px; }
+.of-x:hover { color: var(--accent); }
+.of-row { display: flex; justify-content: space-between; gap: 10px; padding: 2px 0; }
+.of-row b { color: var(--ink); font-weight: 600; text-align: right; }
+.of-row b.ok { color: var(--ok); }
+.of-bar { height: 6px; border-radius: 99px; background: var(--line-soft, #eae1cd); overflow: hidden; margin: 8px 0 7px; }
+.of-bar i { display: block; height: 100%; width: 0; background: linear-gradient(90deg, #00cccc, var(--ok)); transition: width .2s; }
+.of-note, .of-tip { font-size: 11.5px; line-height: 1.55; color: var(--ink-3); margin: 6px 0 0; }
+.of-acts { display: flex; gap: 8px; margin-top: 9px; }
+.of-acts button { white-space: nowrap;
+  flex: 1; padding: 6px 8px; border-radius: 99px; cursor: pointer;
+  border: 1px solid var(--line); background: transparent;
+  font-family: var(--font-body); font-size: 12px; color: var(--ink-2);
+  transition: all .15s;
+}
+.of-acts .of-go { border-color: var(--accent); color: var(--accent); font-weight: 600; }
+.of-acts .of-go:hover { background: var(--accent-soft); }
+.of-acts .of-go:disabled { opacity: .55; cursor: default; }
+.of-acts .of-clear:hover { border-color: var(--bad); color: var(--bad); }
+[data-theme="dark"] #offlinePanel { background: #201d18; border-color: rgba(255,255,255,.14); }
+
+#netBar {
+  position: fixed; left: 50%; bottom: 66px; transform: translateX(-50%); z-index: 69;
+  max-width: 92vw; padding: 7px 14px; border-radius: 99px;
+  background: var(--ok); color: #fff; font-size: 12.5px; font-weight: 600;
+  box-shadow: 0 8px 24px rgba(32,27,20,.24); white-space: nowrap;
+  overflow: hidden; text-overflow: ellipsis;
+}
+#netBar.warn { background: var(--bad); }
+@media (max-width: 900px) {
+  #offlinePanel { bottom: 78px; }
+  #netBar { bottom: 96px; font-size: 12px; }
+}
+body.of-open #netBar { display: none; }

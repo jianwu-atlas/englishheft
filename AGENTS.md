@@ -20,8 +20,8 @@
 | `review.html` | **复习（Leitner SRS）**：今日到期的「已学」场景逐卡展示（盒位徽章 + 词条 + 场景句 + 🔊/🇩🇪），自评「✅ 记住了·升盒 / ❌ 又忘了·回盒 1」。数据 `localStorage englishheft_srs`，五盒间隔 1/2/4/7/15 天；「标记已学」自动入盒 1，取消移出队列 |
 | `pdf.html` | **原文 PDF**：在线翻阅《15000英语单词口袋书》原版（`<iframe>` 阅读器，镜像德语站 `lbk-viewer`）+ 下载按钮。**独立壳手工维护**（无 `#app`，仅载 site.js 走 initTheme + initBurger + 内联 toggle）；`assets/15000-en-words.pdf`（6.5 MB / 1370 页） |
 | `assets/js/site.js` | 交互核心：页面分发、**en-US + de-DE 朗读**（语速三档共用）、隐藏中文自测、复制纯英文、**词汇↔场景句联动（hash `#sc-x-y-z` + `?w=` + `?ph=`）**、搜索 / 进度 / Anki 导出、**🇩🇪 德文对照渲染**（`gerHtml` 逐词 IPA + `speakDe`）、**整段场景连读**（`speakScene` 链式朗读全场景，随🇩🇪开关读英/德，会话 id 防串读，Esc/再点/切Section 停止）、**A3 场景级 Leitner SRS**（`srsEnroll/Advance/Reset/Drop/Due` + `srsMigrate` 一次性迁移 + `renderReview` 复习队列；done 打勾联动入/出队列，`localStorage englishheft_srs`）、**B1 重点句收藏**（`starGet/toggleStar/starCount/starTarget` + 句末 ☆/★ 按钮 + `starSection` 复习页清单，`localStorage englishheft_stars`）、**移动端 ☰ 汉堡导航**（`initBurger`，小屏 7 链接折叠为汉堡下拉） |
-| `assets/js/offline.js` | PWA：注册 SW + 「📥 离线缓存」按钮 + iOS 添加到主屏幕提示 |
-| `sw.js` / `manifest.webmanifest` | Service Worker（缓存优先 + 导航回退）与 PWA 清单 |
+| `assets/js/offline.js` | **离线包（B2）**：注册 SW（install 自动预缓存核心包）+ 左下角「离线包」状态面板（核心 x/28 · PDF 是否就绪 · 占用 MB · 进度条 · 📥 下载全部 / 🗑 清理）+ 断网提示条 `#netBar`（面板打开时自动隐藏）+ iOS 首访「添加到主屏幕」提示 |
+| `sw.js` / `manifest.webmanifest` | Service Worker：`VERSION=englishheft-v2`，**install 自动预缓存 `CORE_FILES`（全部页面 + JS/CSS/图标 ≈ 2.1 MB，不含 PDF）**；fetch 缓存优先且 `ignoreSearch:true`（`?v=N` 也能命中预缓存）；导航 network-first 失败回退；message 支持 `cache-all`（逐文件回执进度）/ `cache-clear` / `ping` |
 | `assets/css/english.css` | 设计系统（复制自德语站 `deutsch.css`）+ 英语站专属样式 |
 | `scripts/build_en_site.py` | **蒸馏脚本**：PDF 文本层 → `assets/js/data/english.js` |
 | `scripts/gen_pages.py` | 生成 6 个页面（同壳不同内容，改导航/文案改这里；NAV 含「复习」→ `review.html`、**「原文」→ `pdf.html`**（该页本身**手工维护**不进生成）；`sentences`/`review` 页额外载 `en-de.js`） |
@@ -33,6 +33,7 @@
 | `scripts/_test_en_links.py` | 六项联动功能 Playwright 测试（**32 项断言**：Part 导航 / 场景互跳 / 单词联动 / 搜索 / 音素反查 / 进度 / Anki；自带 http.server，**需 anaconda 解释器**：`/Users/Jack/opt/anaconda3/bin/python3 scripts/_test_en_links.py`） |
 | `scripts/_test_srs.py` | **A3 Leitner SRS** Playwright 测试（3 个 context：首页/导览到期计数 + 复习卡渲染 + 升盒/回盒 + done 实时入/出队列 + 一次性迁移；自带 http.server 8652，**需 anaconda 解释器**：`/Users/Jack/opt/anaconda3/bin/python3 scripts/_test_srs.py`） |
 | `scripts/_test_stars.py` | **B1 重点句收藏** Playwright 测试（音标默认「常用」+ 蓝色 / ☆ 收藏 2 句 / 刷新保留 / 复习页清单 2 行 / 移出 1 条 / 首页与导览计数 / 空态；自带 http.server 8653，**需 anaconda 解释器**：`/Users/Jack/opt/anaconda3/bin/python3 scripts/_test_stars.py`） |
+| `scripts/_test_offline.py` | **B2 离线包** Playwright 测试（不点按钮自动预缓存 ≥28 文件 / 面板状态 / 断网打开未访问页面 4 个 / 下载全部后 PDF 就绪 / 断网 pdf.html；自带 http.server 8654，**需 anaconda 解释器**：`/Users/Jack/opt/anaconda3/bin/python3 scripts/_test_offline.py`） |
 | `assets/img/favicon.svg` / `og-image.svg` | **Logo 源文件**（**双色块版**：Jian 指定的参考图——深海军蓝 #003366 + 青绿 #00CCCC 两平行色块，白字「英语」跨块 + 青绿拼音「Ying Yu」，透明底）；改 logo 只改这两个 SVG |
 | `scripts/gen_logos.py` | Logo SVG → PNG 栅格化（Playwright Chromium）：favicon-16/32/48、apple-touch-icon、icon-192/512/512-maskable、logo-mark、og-image |
 | `scripts/_check_logo.py` | Logo 本地验证（7 项断言：SVG 内容 / 引用版本号 / 导航 mark 渲染） |
@@ -76,7 +77,8 @@
 - 打包：`python3 scripts/pack_en.py`
 - 冒烟测试：先起本地服务，再 `python3 scripts/_test_en_site.py`
 - 校验：`node --check assets/js/site.js`
-- 本地存储：`englishheft_hidezh`（隐藏中文）、`englishheft_srate`（语速）、`englishheft_theme`（主题）、`englishheft_done`（已学场景号数组，进度打勾）、`englishheft_srs`（Leitner 盒位）、`englishheft_ipa_v2`（音标三态，默认 `smart`）、`englishheft_stars`（重点句 `{"场景号:句idx": 收藏时间戳}`）
+- 本地存储：`englishheft_hidezh`（隐藏中文）、`englishheft_srate`（语速）、`englishheft_theme`（主题）、`englishheft_done`（已学场景号数组，进度打勾）、`englishheft_srs`（Leitner 盒位）、`englishheft_ipa_v2`（音标三态，默认 `smart`）、`englishheft_stars`（重点句 `{"场景号:句idx": 收藏时间戳}`）、`dh_ios_hint_v1`（iOS 加主屏提示已读）
+- ⚠️ **改版发版时务必 bump `sw.js` 的 `VERSION`**（`englishheft-v2` → v3 …），否则老客户端缓存不清、页面停在旧版
 
 ## 部署
 
@@ -87,6 +89,15 @@
 - 仓库：https://github.com/jianwu-atlas/englishheft （描述用中文）
 
 ## 更新记录
+
+- 2026-10-27（**B2 · 离线包：自动预缓存 + 状态面板**，Jian 问「离线缓存怎么用、手机没网怎么办」）：
+  - **诊断**：原实现只在 install 缓存 3 个外壳文件，其余靠手动点按钮；`cache.addAll()` 原子失败 + 「8 分钟后无条件标 ✓」→ 弱网下**假成功**；首访未被 SW 接管时走 `selfCacheAll`（只 fetch 不写 Cache Storage，等于没缓存）。实测：点击前 3 文件 → 点击后 30 文件 / 8.64 MB。
+  - **改法**：① `sw.js` 重写 —— `install` 自动预缓存 **CORE_FILES（28 个，2.1 MB，不含 6.5 MB PDF）**；逐文件 `cacheList()`（单文件失败不影响其余，边缓存边回执）；`VERSION → englishheft-v2`（旧缓存自动清）；fetch 全部改 `caches.match(req, {ignoreSearch:true})`，让 `?v=N` 的静态资源也能命中预缓存（关键：无需逐页访问即可离线）。
+  - ② `offline.js` 重写为**离线包状态面板**：左下角按钮三态（📥 未缓存 / ✓ 核心已缓存 / ✓ 离线可用），点开面板显示 核心 x/28、PDF 是否就绪、占用 MB（`content-length` 求和，不读 blob）、进度条、📥 下载全部 / 🗑 清理；`cache-all` 只补缺的文件（已缓存 PDF 时 1s 完成）；新增断网提示条 `#netBar`（面板打开时隐藏）；iOS 加主屏提示改为**首访即提示**（原来只在缓存后提示）。
+  - **CSS**：`#offlinePanel` / `.of-*` / `#netBar` / `body.of-open`；版本 `english.css v13→v14`、`offline.js v1→v2`。
+  - **验证**：新增 `scripts/_test_offline.py`（自动预缓存 28 文件/3s、面板状态、断网打开 4 个从未访问页面、下载全部后 PDF 就绪、断网 pdf.html 全绿）；其余五个套件回归全绿。桌面 + 390px 移动端截图核对。
+  - **已知取舍**：导航仍是 network-first（保证内容新鲜），断网时控制台会留下 4 条 `ERR_INTERNET_DISCONNECTED`（来自失败的预取，非故障）；Google Fonts 跨域不缓存，离线回退系统字体。
+
 
 - 2026-10-27（**B1 · 音标默认「常用」蓝色强调 + 重点句收藏 ⭐**）：
   - **需求**（Jian）①「标注音标（常用音标，不是所有），强调，例如标注蓝色」②「点击就把这句话标注重点，单独重点强调，存储在一个地方方便复习」。

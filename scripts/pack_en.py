@@ -35,10 +35,14 @@ def main() -> int:
 
     all_files = sorted("./" + str(p.relative_to(DIST)).replace("\\", "/")
                        for p in DIST.rglob("*") if p.is_file())
+    # 核心包 = 全量减去教材 PDF（PDF 6.5 MB，改为「下载全部」时按需缓存）
+    core_files = [f for f in all_files if not f.lower().endswith(".pdf")]
     sw = DIST / "sw.js"
     if sw.exists():
-        sw.write_text(sw.read_text(encoding="utf-8").replace('"__ALL__"', json.dumps(all_files, ensure_ascii=False)),
-                      encoding="utf-8")
+        t = sw.read_text(encoding="utf-8")
+        t = t.replace('"__CORE__"', json.dumps(core_files, ensure_ascii=False))
+        t = t.replace('"__ALL__"', json.dumps(all_files, ensure_ascii=False))
+        sw.write_text(t, encoding="utf-8")
     oj = DIST / "assets" / "js" / "offline.js"
     if oj.exists():
         t = oj.read_text(encoding="utf-8").replace(
