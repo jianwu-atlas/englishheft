@@ -90,11 +90,11 @@
 
 - 2026-10-27（**B1 · 音标默认「常用」蓝色强调 + 重点句收藏 ⭐**）：
   - **需求**（Jian）①「标注音标（常用音标，不是所有），强调，例如标注蓝色」②「点击就把这句话标注重点，单独重点强调，存储在一个地方方便复习」。
-  - **① 音标**：`annotate-en.js` 默认档 `off → smart`（「常用」跳过 the/a/is/of 等基础功能词），存储键 `englishheft_ipa → englishheft_ipa_v2`（避免旧 `off` 记忆让新默认失效）；`ruby.ipa rt` 颜色 `--ink-3 → --en-blue #0090D6`、`.58em → .64em`、`font-weight:600`（深色主题走 `--en-blue` #4DC2F5）；新增 `#app.ipa-on` 状态类 + `#app.ipa-on .sc-turn-body .s-de{line-height:2.1}` / `.sc-turn{padding-top:12px}`，修掉音标压上一行的问题；注解范围排除 `.en-notes` / `.s-zh` / `.star-meta`（解析与中文不再标注）。
+  - **① 音标**：`annotate-en.js` 默认档 `off → smart`（「常用」跳过 the/a/is/of 等基础功能词），存储键 `englishheft_ipa → englishheft_ipa_v2`（避免旧 `off` 记忆让新默认失效）；`ruby.ipa` **单词本身与 `rt` 音标同用书本蓝 `--en-blue` #0090D6**（`rt` 加粗 .64em；深色主题走 #4DC2F5；`mark.wd-hl` 内的词保留青绿高亮 `color:inherit`）；新增 `#app.ipa-on` 状态类 + `#app.ipa-on .sc-turn-body .s-de{line-height:2.1}` / `.sc-turn{padding-top:12px}`，修掉音标压上一行的问题；注解范围排除 `.en-notes` / `.s-zh` / `.star-meta`（解析与中文不再标注），词汇页英文词在 `<a>` 内本就跳过（其下已有 `.s-pron` 音标行）。
   - **② 重点句**：`localStorage englishheft_stars = {"场景号:句idx": 收藏时间戳}`；`site.js` 加 `starGet/starSet/isStar/starCount/toggleStar/starTarget/starKeys` + 句末 `☆/★` 按钮（`starBtn`）。收藏后就地强调：`.sc-turn.starred`（金色左竖条 + 淡金底 + 金色圆点/★）、按钮转实心金。复习页顶部新增 `starSection()`（⭐ 重点句 · 共 N 句，按收藏时间倒序，含 🔊、中文、`→ 场景号 场景名` 回链、`✕` 移出，空态引导）；首页「复习」卡描述与「大类导览」复习入口显示重点句数。
   - **样式**（`english.css`）：`.s-acts`（🔊+⭐ 整体换行，手机端不再让星星单独掉行）、`.s-star/.s-star.on`、`.sc-turn.starred`、`.star-head/.star-card/.star-meta/.rev-star`。
   - **顺带修复**：`.s-speak` 嵌在 `<a class="en-wordlink">` 内时点击会误跳转场景句页（`stopPropagation` 不阻止链接默认行为）→ `bindSpeak` 增加 `preventDefault()`。
-  - **版本**：`site.js v8→v9`、`english.css v11→v12`、`annotate-en.js v1→v2`（`gen_pages.py` + `pdf.html` 同步，regen 6 页 + `pack_en.py`）。
+  - **版本**：`site.js v8→v9`、`english.css v11→v13`、`annotate-en.js v1→v2`（`gen_pages.py` + `pdf.html` 同步，regen 6 页 + `pack_en.py`）。
   - **验证**：新增 `scripts/_test_stars.py`（7 组断言全绿，0 console error）；回归 `_test_en_features.py`（三态改为「默认常用→全部→关」+ 蓝色断言）/`_test_srs.py`/`_test_en_links.py`/`_test_en_de.py`/`_test_en_site.py` 全绿（顺带把 `_test_en_site.py` 的过时断言 4 卡→6 卡、导航 5→7 项）。移动端 390px 与深色主题截图核对。
 
 

@@ -47,10 +47,13 @@ try:
         n_ruby = pg.locator("ruby.ipa").count()
         rt_color = pg.evaluate("""() => { const r = document.querySelector('ruby.ipa rt');
             return r ? getComputedStyle(r).color : ''; }""")
-        print(f"[i] 音标默认档 = {label!r}，ruby={n_ruby}，rt 颜色={rt_color}")
+        w_color = pg.evaluate("""() => { const r = document.querySelector('ruby.ipa');
+            return r ? getComputedStyle(r).color : ''; }""")
+        print(f"[i] 音标默认档 = {label!r}，ruby={n_ruby}，单词色={w_color}，rt 色={rt_color}")
         assert "常用" in label, f"音标默认应为「常用」，实际 {label!r}"
         assert n_ruby > 0, "默认应已标注音标（无需点击）"
         assert rt_color == "rgb(0, 144, 214)", f"音标应为蓝色 #0090D6，实际 {rt_color}"
+        assert w_color == "rgb(0, 144, 214)", f"被标注的单词本身也应为蓝色 #0090D6，实际 {w_color}"
 
         scene = pg.locator(".sc-scene").first
         n_btn = scene.locator(".s-star").count()

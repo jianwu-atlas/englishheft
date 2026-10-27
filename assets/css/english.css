@@ -1374,13 +1374,16 @@ ruby.dh-ipa:hover rt { color: var(--gold); }
 /* ============================================================
    三态音标标注 / 书本蓝色强调 / 德语对照
    ============================================================ */
-/* 词级音标（ruby，与德语站一致；音标用书本蓝强调） */
-ruby.ipa { ruby-position: over; }
+/* 词级音标（ruby，与德语站一致；单词与音标同用书本蓝强调） */
+ruby.ipa { ruby-position: over; color: var(--en-blue, #0090d6); }
 ruby.ipa rt { font-size: .64em; line-height: 1.1; color: var(--en-blue, #0090d6); font-family: var(--font-mono, monospace); font-weight: 600; letter-spacing: .01em; }
-ruby.ipa:hover rt { color: var(--accent); }
+ruby.ipa:hover, ruby.ipa:hover rt { color: var(--accent); }
+/* 单词联动高亮（青绿）优先级更高：高亮词内不改成蓝色 */
+mark.wd-hl ruby.ipa, mark.wd-hl ruby.ipa rt { color: inherit; }
 /* 打开音标时给正文留出 ruby 行高，避免音标压到上一行 */
 #app.ipa-on .sc-turn-body .s-de { line-height: 2.1; }
 #app.ipa-on .sc-turn { padding-top: 12px; }
+[data-theme="dark"] ruby.ipa { color: var(--en-blue, #4dc2f5); }
 [data-theme="dark"] ruby.ipa rt { color: var(--en-blue, #4dc2f5); }
 
 /* 音标开关（右下角浮动，参照德语站） */

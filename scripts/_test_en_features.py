@@ -25,6 +25,9 @@ with sync_playwright() as p:
     rt_color = pg.evaluate("""() => { const r = document.querySelector('ruby.ipa rt');
         return r ? getComputedStyle(r).color : ''; }""")
     res.append((f"音标为蓝色强调（{rt_color}）", rt_color == "rgb(0, 144, 214)"))
+    w_color = pg.evaluate("""() => { const r = document.querySelector('ruby.ipa');
+        return r ? getComputedStyle(r).color : ''; }""")
+    res.append((f"被标注的单词本身也标蓝（{w_color}）", w_color == "rgb(0, 144, 214)"))
 
     pg.click("#ipaToggle"); pg.wait_for_timeout(700)
     lab1 = pg.locator("#ipaToggle").inner_text(); r1 = pg.locator("ruby.ipa").count()
