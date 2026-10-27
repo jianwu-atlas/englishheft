@@ -44,7 +44,7 @@ SHELL = """<!DOCTYPE html>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,300..700;1,9..144,300..700&family=IBM+Plex+Sans:wght@400;500;600;700&family=IBM+Plex+Mono:ital,wght@0,400;0,500;1,400&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="assets/css/english.css?v=11">
+<link rel="stylesheet" href="assets/css/english.css?v=12">
 <link rel="icon" type="image/svg+xml" href="assets/img/favicon.svg?v=3">
 <link rel="icon" type="image/png" sizes="32x32" href="assets/img/favicon-32.png?v=3">
 <link rel="icon" type="image/png" sizes="16x16" href="assets/img/favicon-16.png?v=3">
@@ -98,8 +98,8 @@ SHELL = """<!DOCTYPE html>
 </main>
 
 <script src="assets/js/data/english.js?v=2"></script>
-{extra_scripts}<script src="assets/js/site.js?v=8"></script>
-<script src="assets/js/annotate-en.js?v=1"></script>
+{extra_scripts}<script src="assets/js/site.js?v=9"></script>
+<script src="assets/js/annotate-en.js?v=2"></script>
 <script src="assets/js/offline.js?v=1"></script>
 </body>
 </html>

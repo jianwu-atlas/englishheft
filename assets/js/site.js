@@ -114,6 +114,7 @@
   function bindSpeak(root) {
     $$(".s-speak", root).forEach(b => b.addEventListener("click", e => {
       e.stopPropagation();
+      e.preventDefault();   // 🔊 常嵌在 <a class="en-wordlink"> 内：阻止链接默认跳转
       b.classList.contains("s-speak-de") ? speakDe(b.dataset.de) : speak(b.dataset.t);
     }));
   }
@@ -169,6 +170,31 @@
     if (changed) srsSet(o);
   }
   window.__enSrs = { get: srsGet, due: srsDue, enroll: srsEnroll, advance: srsAdvance, reset: srsReset, drop: srsDrop };
+
+  /* ---------------- B1 · 重点句收藏（⭐，localStorage） ---------------- */
+  const STARKEY = "englishheft_stars";       // { "1.1.1:0": 收藏时间戳ms }
+  const starGet = () => { try { return JSON.parse(localStorage.getItem(STARKEY) || "{}") || {}; } catch (e) { return {}; } };
+  const starSet = o => localStorage.setItem(STARKEY, JSON.stringify(o));
+  const isStar = k => !!starGet()[k];
+  const starCount = () => Object.keys(starGet()).length;
+  const toggleStar = k => {
+    const o = starGet();
+    if (o[k]) delete o[k]; else o[k] = Date.now();
+    starSet(o);
+    return !!o[k];
+  };
+  /* key = "场景号:句idx" → { sc, s, idx }（场景或句子不存在时返回 null） */
+  const starTarget = k => {
+    const [no, idx] = String(k).split(":");
+    const it = SCENE_INDEX[no];
+    if (!it) return null;
+    const s = it.sc.sentences[+idx];
+    return s ? { sc: it.sc, s, idx: +idx } : null;
+  };
+  /* 按收藏时间倒序（最新在前） */
+  const starKeys = () => { const o = starGet(); return Object.keys(o).sort((a, b) => o[b] - o[a]); };
+  const starBtn = (k, on) => `<button class="s-star${on ? " on" : ""}" data-star="${k}"
+      title="${on ? "取消重点句" : "标为重点句（收进「复习 → 重点句」）"}">${on ? "★" : "☆"}</button>`;
 
   const doneBtn = sc => {
     const d = getDone().has(sc.no);
@@ -254,8 +280,9 @@
     const { secs, nSc, nW, nS, nN } = stats();
     const ph = ENGLISH.phonetics;
     const nDue = srsDueCount();
+    const nStar = starCount();
     const cards = [
-      ["review.html", "复习", "Review", nDue ? `<span class="rev-due">${nDue} 场景今日到期</span>` : "今日无到期场景", `Leitner 五盒间隔复习（${LEITNER_DAYS.join("/")} 天）·「标记已学」场景自动入队`],
+      ["review.html", "复习", "Review", nDue ? `<span class="rev-due">${nDue} 场景今日到期</span>` : "今日无到期场景", `⭐ ${nStar} 句重点句 · Leitner 五盒间隔复习（${LEITNER_DAYS.join("/")} 天）·「标记已学」场景自动入队`],
       ["vocab.html", "词汇", "Vocabulary", `${nSc} 场景 · ${nW} 词条`, "英文 / 音标 / 中文三行对照，点词即朗读"],
       ["sentences.html", "场景句", "Sentences", `${nS} 句 · ${nN} 条解析`, "Top10 场景句 + 短语用法 / 单词说明 / 句型搭配"],
       ["phonetics.html", "语音·音标", "Phonetics", `${ph.vowels.length} 元音 · ${ph.consonants.length} 辅音`, "从全书音标反推的音素表，每个音素配书中例词"],
@@ -508,11 +535,13 @@
               html = hlText(s.en, s.hl);
             }
             const g = (hasDE && EN_DE[`${sc.no}:${idx}`]) || null;
+            const key = `${sc.no}:${idx}`;
+            const isSt = isStar(key);
             return `
-            <div class="sc-turn">
-              <span class="sc-spk">·</span>
+            <div class="sc-turn${isSt ? " starred" : ""}">
+              <span class="sc-spk">${isSt ? "★" : "·"}</span>
               <div class="sc-turn-body">
-                <p class="s-de">${html}<button class="s-speak" data-t="${escA(s.en)}" title="朗读">🔊</button></p>
+                <p class="s-de">${html}<span class="s-acts"><button class="s-speak" data-t="${escA(s.en)}" title="朗读">🔊</button>${starBtn(key, isSt)}</span></p>
                 ${g ? gerHtml(g) : ""}
                 <p class="s-zh">${esc(s.zh)}</p>
                 ${s.notes.length ? `<div class="en-notes">${s.notes.map(n =>
@@ -545,6 +574,20 @@
       `【${sc.no} ${sc.zh}】\n` + sc.sentences.map(x => x.en).join("\n")).join("\n\n"));
     bindDone(app, () => {});
     bindTools(app, () => renderSentences(app));
+    // ⭐ 重点句：点句子右侧 ☆ → 收藏（就地高亮 + 写入 localStorage，复习页集中呈现）
+    $$(".s-star", app).forEach(b => b.addEventListener("click", e => {
+      e.stopPropagation();
+      const on = toggleStar(b.dataset.star);
+      b.textContent = on ? "★" : "☆";
+      b.classList.toggle("on", on);
+      b.title = on ? "取消重点句" : "标为重点句（收进「复习 → 重点句」）";
+      const turn = b.closest(".sc-turn");
+      if (turn) {
+        turn.classList.toggle("starred", on);
+        const spk = turn.querySelector(".sc-spk");
+        if (spk) spk.textContent = on ? "★" : "·";
+      }
+    }));
     // 整段场景连读：随「🇩🇪 德语对照」开关读英文/德文；再点同按钮或 Esc 停止
     $$(".s-speak-scene", app).forEach(b => b.addEventListener("click", e => {
       e.stopPropagation();
@@ -611,7 +654,7 @@
       <div class="prog-card card">
         <div class="prog-head">🗸 学习进度 <b>${totalDone}</b> / ${nSc} 场景（在词汇 / 场景句页的场景卡上点「标记已学」）</div>
         <div class="prog"><i style="width:${nSc ? (totalDone / nSc * 100) : 0}%"></i></div>
-        <a class="rev-entry" href="review.html">📅 复习队列 · <b>${nDue}</b> 场景今日到期 →</a>
+        <a class="rev-entry" href="review.html">📅 复习队列 · <b>${nDue}</b> 场景今日到期 · <span class="rev-star">⭐ <b>${starCount()}</b> 重点句</span> →</a>
       </div>
       ${ENGLISH.intros.map(it => {
         const s = secs.find(x => x.no === it.no);
@@ -669,12 +712,36 @@
       </div>
     </section>`;
   }
+  /* ---------- B1 · 重点句清单（复习页顶部，按收藏时间倒序） ---------- */
+  function starSection() {
+    const items = starKeys().map(k => ({ k, t: starTarget(k) })).filter(x => x.t);
+    const head = `
+      <div class="prog-card card star-head">
+        <div class="prog-head">⭐ 重点句 · 共 <b>${items.length}</b> 句（在「场景句」页每句右侧点 ☆ 收藏）</div>
+        <p class="rev-sub">按收藏时间倒序；「→ 场景」回原场景上下文，「✕」移出重点。</p>
+      </div>`;
+    if (!items.length) return head + `<div class="card rev-empty star-empty">还没有重点句。去 <a href="sentences.html">场景句</a> 页，点任意句子右侧的 ☆ 即可收进这里。</div>`;
+    return head + `
+      <section class="sc-scene card star-card">
+        ${items.map(({ k, t }) => `
+          <div class="sc-turn starred" data-starkey="${k}">
+            <span class="sc-spk">★</span>
+            <div class="sc-turn-body">
+              <p class="s-de">${hlText(t.s.en, t.s.hl)}<span class="s-acts"><button class="s-speak" data-t="${escA(t.s.en)}" title="朗读">🔊</button>
+                <button class="s-star on" data-star="${k}" title="移出重点句">✕</button></span></p>
+              <p class="s-zh">${esc(t.s.zh)}</p>
+              <p class="star-meta"><a class="sc-xlink" href="sentences.html#sc-${t.sc.no.replace(/\./g, "-")}">→ ${esc(t.sc.no)} ${esc(t.sc.zh)}</a></p>
+            </div>
+          </div>`).join("")}
+      </section>`;
+  }
   function renderReview(app) {
     const due = srsDue();
     const total = srsTotal();
     const nDone = getDone().size;
     app.innerHTML = `
       ${toolBar()}
+      ${starSection()}
       <div class="prog-card card rev-head">
         <div class="prog-head">📅 复习队列 · 今日到期 <b>${due.length}</b> 场景（队列共 ${total} 场景 · 已学 ${nDone}）</div>
         <p class="rev-sub">Leitner 五盒：记住 → 升盒（间隔 ${LEITNER_DAYS.join(" / ")} 天）；又忘 → 回盒 1。新「标记已学」的场景自动入盒 1。</p>
@@ -683,8 +750,13 @@
       ${due.length ? due.map(reviewCard).join("") :
         `<div class="card rev-empty">🎉 今日无到期场景。<br>去 <a href="vocab.html">词汇</a> / <a href="sentences.html">场景句</a> 页的场景卡上「标记已学」，它们会按 Leitner 间隔进入复习队列。</div>`}
     `;
-    setStat(`今日到期 ${due.length} 场景`);
+    setStat(`今日到期 ${due.length} 场景 · 重点句 ${starCount()}`);
     bindTools(app);
+    $$(".star-card .s-star", app).forEach(b => b.addEventListener("click", e => {
+      e.stopPropagation();
+      toggleStar(b.dataset.star);
+      renderReview(app);
+    }));
     $$(".rev-keep", app).forEach(b => b.addEventListener("click", () => { srsAdvance(b.dataset.keep); renderReview(app); }));
     $$(".rev-forget", app).forEach(b => b.addEventListener("click", () => { srsReset(b.dataset.forget); renderReview(app); }));
   }

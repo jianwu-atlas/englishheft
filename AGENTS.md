@@ -19,7 +19,7 @@
 | `sections.html` | **大类导览**：17 个 Section 的构成（Part / 场景清单）与学习建议；**学习进度**（总进度条 + 大类徽章 + 场景 chip ✓）+ **📅 复习队列入口**（今日到期 N 场景 →） |
 | `review.html` | **复习（Leitner SRS）**：今日到期的「已学」场景逐卡展示（盒位徽章 + 词条 + 场景句 + 🔊/🇩🇪），自评「✅ 记住了·升盒 / ❌ 又忘了·回盒 1」。数据 `localStorage englishheft_srs`，五盒间隔 1/2/4/7/15 天；「标记已学」自动入盒 1，取消移出队列 |
 | `pdf.html` | **原文 PDF**：在线翻阅《15000英语单词口袋书》原版（`<iframe>` 阅读器，镜像德语站 `lbk-viewer`）+ 下载按钮。**独立壳手工维护**（无 `#app`，仅载 site.js 走 initTheme + initBurger + 内联 toggle）；`assets/15000-en-words.pdf`（6.5 MB / 1370 页） |
-| `assets/js/site.js` | 交互核心：页面分发、**en-US + de-DE 朗读**（语速三档共用）、隐藏中文自测、复制纯英文、**词汇↔场景句联动（hash `#sc-x-y-z` + `?w=` + `?ph=`）**、搜索 / 进度 / Anki 导出、**🇩🇪 德文对照渲染**（`gerHtml` 逐词 IPA + `speakDe`）、**整段场景连读**（`speakScene` 链式朗读全场景，随🇩🇪开关读英/德，会话 id 防串读，Esc/再点/切Section 停止）、**A3 场景级 Leitner SRS**（`srsEnroll/Advance/Reset/Drop/Due` + `srsMigrate` 一次性迁移 + `renderReview` 复习队列；done 打勾联动入/出队列，`localStorage englishheft_srs`）、**移动端 ☰ 汉堡导航**（`initBurger`，小屏 7 链接折叠为汉堡下拉） |
+| `assets/js/site.js` | 交互核心：页面分发、**en-US + de-DE 朗读**（语速三档共用）、隐藏中文自测、复制纯英文、**词汇↔场景句联动（hash `#sc-x-y-z` + `?w=` + `?ph=`）**、搜索 / 进度 / Anki 导出、**🇩🇪 德文对照渲染**（`gerHtml` 逐词 IPA + `speakDe`）、**整段场景连读**（`speakScene` 链式朗读全场景，随🇩🇪开关读英/德，会话 id 防串读，Esc/再点/切Section 停止）、**A3 场景级 Leitner SRS**（`srsEnroll/Advance/Reset/Drop/Due` + `srsMigrate` 一次性迁移 + `renderReview` 复习队列；done 打勾联动入/出队列，`localStorage englishheft_srs`）、**B1 重点句收藏**（`starGet/toggleStar/starCount/starTarget` + 句末 ☆/★ 按钮 + `starSection` 复习页清单，`localStorage englishheft_stars`）、**移动端 ☰ 汉堡导航**（`initBurger`，小屏 7 链接折叠为汉堡下拉） |
 | `assets/js/offline.js` | PWA：注册 SW + 「📥 离线缓存」按钮 + iOS 添加到主屏幕提示 |
 | `sw.js` / `manifest.webmanifest` | Service Worker（缓存优先 + 导航回退）与 PWA 清单 |
 | `assets/css/english.css` | 设计系统（复制自德语站 `deutsch.css`）+ 英语站专属样式 |
@@ -28,10 +28,11 @@
 | `scripts/pack_en.py` | 打包 `dist/`（并把全量清单注入 `sw.js` / `offline.js`） |
 | `scripts/_test_en_site.py` | Playwright 冒烟测试（21 项断言） |
 | `scripts/extract_blue.py` | 从 PDF 按字符取色抽取**书本蓝色强调**（RGB 0,158,231）→ `en15000-blue.json`（12783 段） |
-| `assets/js/annotate-en.js` | **三态音标标注**（关 / 常用 / 全部）：词典取自本书 7052 条音标，ruby 标注，右下角浮动开关 |
+| `assets/js/annotate-en.js` | **三态音标标注**（关 / **常用（默认）** / 全部）：词典取自本书 7052 条音标，ruby 标注，**音标为书本蓝 `--en-blue` 加粗**，右下角浮动开关；打开时给 `#app` 加 `.ipa-on` 以留出 ruby 行高；localStorage `englishheft_ipa_v2` |
 | `scripts/_test_en_features.py` | 三项新功能 Playwright 测试（音标三态 / 蓝色强调 / 中德对照） |
 | `scripts/_test_en_links.py` | 六项联动功能 Playwright 测试（**32 项断言**：Part 导航 / 场景互跳 / 单词联动 / 搜索 / 音素反查 / 进度 / Anki；自带 http.server，**需 anaconda 解释器**：`/Users/Jack/opt/anaconda3/bin/python3 scripts/_test_en_links.py`） |
 | `scripts/_test_srs.py` | **A3 Leitner SRS** Playwright 测试（3 个 context：首页/导览到期计数 + 复习卡渲染 + 升盒/回盒 + done 实时入/出队列 + 一次性迁移；自带 http.server 8652，**需 anaconda 解释器**：`/Users/Jack/opt/anaconda3/bin/python3 scripts/_test_srs.py`） |
+| `scripts/_test_stars.py` | **B1 重点句收藏** Playwright 测试（音标默认「常用」+ 蓝色 / ☆ 收藏 2 句 / 刷新保留 / 复习页清单 2 行 / 移出 1 条 / 首页与导览计数 / 空态；自带 http.server 8653，**需 anaconda 解释器**：`/Users/Jack/opt/anaconda3/bin/python3 scripts/_test_stars.py`） |
 | `assets/img/favicon.svg` / `og-image.svg` | **Logo 源文件**（**双色块版**：Jian 指定的参考图——深海军蓝 #003366 + 青绿 #00CCCC 两平行色块，白字「英语」跨块 + 青绿拼音「Ying Yu」，透明底）；改 logo 只改这两个 SVG |
 | `scripts/gen_logos.py` | Logo SVG → PNG 栅格化（Playwright Chromium）：favicon-16/32/48、apple-touch-icon、icon-192/512/512-maskable、logo-mark、og-image |
 | `scripts/_check_logo.py` | Logo 本地验证（7 项断言：SVG 内容 / 引用版本号 / 导航 mark 渲染） |
@@ -75,7 +76,7 @@
 - 打包：`python3 scripts/pack_en.py`
 - 冒烟测试：先起本地服务，再 `python3 scripts/_test_en_site.py`
 - 校验：`node --check assets/js/site.js`
-- 本地存储：`englishheft_hidezh`（隐藏中文）、`englishheft_srate`（语速）、`englishheft_theme`（主题）、`englishheft_done`（已学场景号数组，进度打勾）
+- 本地存储：`englishheft_hidezh`（隐藏中文）、`englishheft_srate`（语速）、`englishheft_theme`（主题）、`englishheft_done`（已学场景号数组，进度打勾）、`englishheft_srs`（Leitner 盒位）、`englishheft_ipa_v2`（音标三态，默认 `smart`）、`englishheft_stars`（重点句 `{"场景号:句idx": 收藏时间戳}`）
 
 ## 部署
 
@@ -86,6 +87,16 @@
 - 仓库：https://github.com/jianwu-atlas/englishheft （描述用中文）
 
 ## 更新记录
+
+- 2026-10-27（**B1 · 音标默认「常用」蓝色强调 + 重点句收藏 ⭐**）：
+  - **需求**（Jian）①「标注音标（常用音标，不是所有），强调，例如标注蓝色」②「点击就把这句话标注重点，单独重点强调，存储在一个地方方便复习」。
+  - **① 音标**：`annotate-en.js` 默认档 `off → smart`（「常用」跳过 the/a/is/of 等基础功能词），存储键 `englishheft_ipa → englishheft_ipa_v2`（避免旧 `off` 记忆让新默认失效）；`ruby.ipa rt` 颜色 `--ink-3 → --en-blue #0090D6`、`.58em → .64em`、`font-weight:600`（深色主题走 `--en-blue` #4DC2F5）；新增 `#app.ipa-on` 状态类 + `#app.ipa-on .sc-turn-body .s-de{line-height:2.1}` / `.sc-turn{padding-top:12px}`，修掉音标压上一行的问题；注解范围排除 `.en-notes` / `.s-zh` / `.star-meta`（解析与中文不再标注）。
+  - **② 重点句**：`localStorage englishheft_stars = {"场景号:句idx": 收藏时间戳}`；`site.js` 加 `starGet/starSet/isStar/starCount/toggleStar/starTarget/starKeys` + 句末 `☆/★` 按钮（`starBtn`）。收藏后就地强调：`.sc-turn.starred`（金色左竖条 + 淡金底 + 金色圆点/★）、按钮转实心金。复习页顶部新增 `starSection()`（⭐ 重点句 · 共 N 句，按收藏时间倒序，含 🔊、中文、`→ 场景号 场景名` 回链、`✕` 移出，空态引导）；首页「复习」卡描述与「大类导览」复习入口显示重点句数。
+  - **样式**（`english.css`）：`.s-acts`（🔊+⭐ 整体换行，手机端不再让星星单独掉行）、`.s-star/.s-star.on`、`.sc-turn.starred`、`.star-head/.star-card/.star-meta/.rev-star`。
+  - **顺带修复**：`.s-speak` 嵌在 `<a class="en-wordlink">` 内时点击会误跳转场景句页（`stopPropagation` 不阻止链接默认行为）→ `bindSpeak` 增加 `preventDefault()`。
+  - **版本**：`site.js v8→v9`、`english.css v11→v12`、`annotate-en.js v1→v2`（`gen_pages.py` + `pdf.html` 同步，regen 6 页 + `pack_en.py`）。
+  - **验证**：新增 `scripts/_test_stars.py`（7 组断言全绿，0 console error）；回归 `_test_en_features.py`（三态改为「默认常用→全部→关」+ 蓝色断言）/`_test_srs.py`/`_test_en_links.py`/`_test_en_de.py`/`_test_en_site.py` 全绿（顺带把 `_test_en_site.py` 的过时断言 4 卡→6 卡、导航 5→7 项）。移动端 390px 与深色主题截图核对。
+
 
 - 2026-10-16（**A3 · 场景级 Leitner SRS 复习队列**，commit 见下）：
   - **需求**：Jian 选「A·学习效果提升」后拍板「A3 = 场景级（Leitner）」。把场景「已学打勾」升级为 Leitner 五盒间隔复习：记住升盒、又忘回盒 1，间隔 1/2/4/7/15 天；首页/大类导览加「今日到期 N 场景」入口 → 独立复习页。

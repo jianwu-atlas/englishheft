@@ -1374,10 +1374,14 @@ ruby.dh-ipa:hover rt { color: var(--gold); }
 /* ============================================================
    三态音标标注 / 书本蓝色强调 / 德语对照
    ============================================================ */
-/* 词级音标（ruby，与德语站一致） */
+/* 词级音标（ruby，与德语站一致；音标用书本蓝强调） */
 ruby.ipa { ruby-position: over; }
-ruby.ipa rt { font-size: .58em; line-height: 1.1; color: var(--ink-3); font-family: var(--font-mono, monospace); letter-spacing: .01em; }
+ruby.ipa rt { font-size: .64em; line-height: 1.1; color: var(--en-blue, #0090d6); font-family: var(--font-mono, monospace); font-weight: 600; letter-spacing: .01em; }
 ruby.ipa:hover rt { color: var(--accent); }
+/* 打开音标时给正文留出 ruby 行高，避免音标压到上一行 */
+#app.ipa-on .sc-turn-body .s-de { line-height: 2.1; }
+#app.ipa-on .sc-turn { padding-top: 12px; }
+[data-theme="dark"] ruby.ipa rt { color: var(--en-blue, #4dc2f5); }
 
 /* 音标开关（右下角浮动，参照德语站） */
 #ipaToggle {
@@ -1510,3 +1514,32 @@ mark.wd-hl { background: var(--wd-teal-soft); color: var(--wd-teal); border-radi
 .footer-link:hover { border-color: var(--accent); color: var(--accent); }
 .footer-link img { width: 18px; height: 18px; border-radius: 4px; flex: none; }
 .footer-link svg { width: 15px; height: 15px; flex: none; }
+
+/* ============================================================
+   B1 · 重点句收藏（⭐）：就地强调 + 复习页清单
+   ============================================================ */
+.s-acts { display: inline-block; white-space: nowrap; }
+.s-star {
+  margin-left: 6px; padding: 1px 8px; border-radius: 99px; cursor: pointer;
+  border: 1px solid var(--line); background: transparent;
+  font-size: 12px; line-height: 1.6; vertical-align: middle;
+  color: var(--ink-3); transition: all .15s;
+}
+.s-star:hover { border-color: var(--gold); color: var(--gold); background: var(--gold-soft, #f6ecd6); }
+.s-star.on { border-color: var(--gold); background: var(--gold); color: #fff; }
+/* 被收藏的句子：左侧金色竖条 + 淡金底（与书本蓝 / 单词青绿高亮区分） */
+.sc-turn.starred { background: var(--gold-soft, #f8f3e6); border-left: 3px solid var(--gold); border-radius: 0 10px 10px 0; padding-left: 8px; }
+.sc-turn.starred .sc-spk { background: var(--gold); color: #fff; }
+[data-theme="dark"] .sc-turn.starred { background: rgba(201,162,39,.13); }
+[data-theme="dark"] .s-star { border-color: rgba(255,255,255,.18); color: var(--ink-3); }
+[data-theme="dark"] .s-star.on { border-color: var(--gold); background: var(--gold); color: #1c1a16; }
+/* 复习页重点句清单 */
+.star-head { border-left: 3px solid var(--gold); }
+.star-head .prog-head b { color: var(--gold); }
+.star-card { padding-top: 6px; padding-bottom: 10px; }
+.star-card .sc-turn { border-bottom: 1px dashed var(--line-soft); }
+.star-card .sc-turn:last-child { border-bottom: 0; }
+.star-meta { margin: 2px 0 0; font-size: 12px; }
+.star-meta .sc-xlink { font-size: 12px; }
+.rev-star b { color: var(--gold); }
+.star-empty { font-size: 13.5px; }

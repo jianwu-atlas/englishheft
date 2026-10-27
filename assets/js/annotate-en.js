@@ -4,18 +4,19 @@
    参照德语站 annotate.js 的实现方式：
      · 词典来自《15000英语单词口袋书》本身的 7052 条音标（ENGLISH 数据）
      · 关   → 不标注
-     · 常用 → 只标注「非基础功能词」（跳过 the/a/is/of… 等高频虚词）
+     · 常用 → 只标注「非基础功能词」（跳过 the/a/is/of… 等高频虚词）**默认档**
      · 全部 → 词典命中的词全标
-   标注形式：<ruby class="ipa">word<rt>音标</rt></ruby>（与德语站一致）
+   标注形式：<ruby class="ipa">word<rt>音标</rt></ruby>（音标为蓝色强调，见 english.css）
    开关：右下角浮动按钮，localStorage 记忆（englishheft_ipa）
    ============================================================ */
 (function () {
   "use strict";
 
-  const KEY = "englishheft_ipa";
+  const KEY = "englishheft_ipa_v2";   // v2：默认「常用」（蓝色强调），旧键 englishheft_ipa 弃用
   const MODES = ["off", "smart", "all"];
+  const DEFAULT_MODE = "smart";       // 默认即标注「常用」音标（跳过 the/a/is/of 等基础功能词）
   const LABEL = { off: "音标：关", smart: "音标：常用", all: "音标：全部" };
-  const SKIP_SEL = "script,style,noscript,ruby,rt,button,input,textarea,select,code,pre,a,.s-pron,.en-ipa,.ph-ipa,.en-note-k,.sc-spk";
+  const SKIP_SEL = "script,style,noscript,ruby,rt,button,input,textarea,select,code,pre,a,.s-pron,.en-ipa,.ph-ipa,.en-note-k,.sc-spk,.en-notes,.s-zh,.star-meta";
   // 基础功能词：常用挡不标（与德语站 BASIC 同思路）
   const BASIC = new Set(("a an the and or but if then than so as of to in on at by for with from into over under " +
     "is are was were be been being am do does did have has had " +
@@ -40,7 +41,7 @@
 
   const mode = () => {
     const v = localStorage.getItem(KEY);
-    return MODES.includes(v) ? v : "off";
+    return MODES.includes(v) ? v : DEFAULT_MODE;
   };
 
   const esc = s => String(s).replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
@@ -92,7 +93,9 @@
     const app = document.getElementById("app");
     if (!app) return;
     unannotate(app);
-    if (mode() !== "off") annotate(app);
+    const m = mode();
+    app.classList.toggle("ipa-on", m !== "off");   // 打开时给正文留出音标行高（CSS：#app.ipa-on）
+    if (m !== "off") annotate(app);
   }
 
   function buildButton() {
@@ -109,7 +112,7 @@
     });
     b.textContent = LABEL[mode()];
     b.classList.toggle("all", mode() === "all");
-    b.title = "音标标注：关 → 常用 → 全部（常用挡跳过 the/a/is/of 等基础功能词）";
+    b.title = "音标标注：关 → 常用 → 全部（常用挡跳过 the/a/is/of 等基础功能词，音标为蓝色）";
     document.body.appendChild(b);
   }
 

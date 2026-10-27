@@ -11,7 +11,7 @@ with sync_playwright() as p:
 
     # 首页
     pg.goto(B + "index.html", wait_until="networkidle", timeout=90000); pg.wait_for_timeout(600)
-    res.append((f"首页 4 张入口卡 {pg.locator('.en-card').count()} 个", pg.locator(".en-card").count() == 4))
+    res.append((f"首页 6 张入口卡 {pg.locator('.en-card').count()} 个", pg.locator(".en-card").count() == 6))
     res.append((f"首页数字：{pg.locator('.en-hero-num').inner_text()}", pg.locator(".en-hero-num").inner_text().replace(",", "") == "7052"))
 
     # 词汇
@@ -57,7 +57,7 @@ with sync_playwright() as p:
 
     # 导航 + PWA
     pg.goto(B + "index.html", wait_until="networkidle", timeout=60000); pg.wait_for_timeout(500)
-    res.append((f"导航 {pg.locator('.nav-links a').count()} 项", pg.locator(".nav-links a").count() == 5))
+    res.append((f"导航 {pg.locator('.nav-links a').count()} 项", pg.locator(".nav-links a").count() == 7))
     sw = pg.evaluate("async () => { const r = await navigator.serviceWorker.getRegistration(); return r ? (r.active?.state || 'reg') : 'none'; }")
     res.append((f"Service Worker：{sw}", sw in ("activated", "activating", "reg")))
     res.append((f"离线清单 {pg.evaluate('() => (window.__DH_SW_FILES || []).length')} 项",
