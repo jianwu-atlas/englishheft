@@ -10,6 +10,6 @@
   <!-- 青绿拼音 Ying Yu：右上角，两行，底边切入右块顶部 -->
   <text x="264" y="84" font-family="Arial,Helvetica,sans-serif" font-size="20" font-weight="800" fill="#00CCCC" letter-spacing="0.5">Ying</text>
   <text x="264" y="108" font-family="Arial,Helvetica,sans-serif" font-size="20" font-weight="800" fill="#00CCCC" letter-spacing="0.5">Yu</text>
-  <!-- jwlab 出品方 maker's mark：底部斜体小字，与德语站 logo-mark 同制式（小尺寸 favicon 下不可见，大图才显现） -->
-  <text x="256" y="446" font-family="Georgia, 'Times New Roman', serif" font-size="40" font-style="italic" fill="#003366" fill-opacity="0.82" text-anchor="middle" letter-spacing="4">jwlab</text>
+  <!-- jwlab 出品方 maker's mark：底部斜体大字（Jian「尽量大」），与德语站 logo-mark 同字体制式 -->
+  <text x="256" y="482" font-family="Georgia, 'Times New Roman', serif" font-size="56" font-style="italic" fill="#003366" fill-opacity="0.82" text-anchor="middle" letter-spacing="4">jwlab</text>
 </svg>
